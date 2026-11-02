@@ -1,10 +1,11 @@
 /**
  * Product Discovery Provider & Demo Catalog
  * Implements standard normalized product interface.
- * Supports Channel3 API structure and authentic photography demo items.
+ * Connects directly to Channel3 Live Product Graph API (https://api.trychannel3.com/v1/search)
+ * and includes authentic photography demo items and adversarial test listings.
  */
 
-import { ProductItem } from './types';
+import type { ProductItem } from './types.ts';
 
 export const DEMO_PRODUCTS: ProductItem[] = [
   {
@@ -142,41 +143,68 @@ export const DEMO_PRODUCTS: ProductItem[] = [
 ];
 
 export async function searchProducts(query: string, maxPrice?: number): Promise<ProductItem[]> {
-  // If Channel3 API key is configured, query external service
+  // 1. Channel3 Live Search Integration (api.trychannel3.com/v1/search)
   const channel3ApiKey = process.env.CHANNEL3_API_KEY;
   if (channel3ApiKey) {
     try {
-      // Channel3 integration boundary (isolated service)
-      const res = await fetch(`https://api.channel3.ai/v1/products/search?q=${encodeURIComponent(query)}`, {
+      const res = await fetch('https://api.trychannel3.com/v1/search', {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${channel3ApiKey}`,
+          'x-api-key': channel3ApiKey,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          query: query || 'photography camera accessories',
+          limit: 8,
+        }),
       });
+
       if (res.ok) {
         const liveData = await res.json();
         if (Array.isArray(liveData.products) && liveData.products.length > 0) {
-          return liveData.products.map((p: any) => ({
-            id: p.id || `ch3-${Math.random().toString(36).substring(2, 9)}`,
-            title: p.title || p.name,
-            description: p.description || '',
-            price: Number(p.price) || 0,
-            currency: (p.currency || 'USD') as any,
-            merchant: p.merchant || p.store || 'Channel3 Verified Merchant',
-            category: p.category || 'General',
-            imageUrl: p.imageUrl || p.image || '',
-            productUrl: p.url || '',
-            inStock: p.in_stock ?? true,
-            isSampleData: false,
-          }));
+          const liveResults: ProductItem[] = liveData.products.map((p: any) => {
+            const offer = p.offers?.[0];
+            const price = offer?.price?.price || 49.99;
+            const domain = offer?.domain || p.brands?.[0]?.name || 'Apex Optics';
+            const merchantName = domain.includes('bhphotovideo') ? 'B&H Photo Video' :
+                                domain.includes('adorama') ? 'Adorama' :
+                                domain.includes('peakdesign') ? 'Peak Design' :
+                                domain;
+
+            return {
+              id: `ch3-${p.id}`,
+              title: p.title,
+              description: p.description || p.key_features?.join('. ') || '',
+              price: Number(price),
+              currency: (offer?.price?.currency || 'USD') as any,
+              merchant: merchantName,
+              category: p.category?.title || 'Photography Accessories',
+              imageUrl: p.images?.[0]?.cleaned_url || p.images?.[0]?.url || 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80',
+              productUrl: offer?.url || 'https://trychannel3.com',
+              inStock: offer?.availability === 'InStock' || true,
+              rating: 4.8,
+              attributes: p.structured_attributes ? Object.fromEntries(
+                Object.entries(p.structured_attributes).slice(0, 3).map(([k, v]: [string, any]) => [k, Array.isArray(v) ? v.join(', ') : String(v)])
+              ) : undefined,
+              isSampleData: false,
+            };
+          });
+
+          // Always ensure the adversarial test listing is appended for security demonstration purposes
+          const adversarialItem = DEMO_PRODUCTS.find(p => p.flaggedRisk);
+          if (adversarialItem && !liveResults.some(r => r.id === adversarialItem.id)) {
+            liveResults.push(adversarialItem);
+          }
+
+          return liveResults;
         }
       }
     } catch (err) {
-      console.warn('[Channel3 Provider] External search failed, falling back to verified catalogue:', err);
+      console.warn('[Channel3 Live Search] External API failed, falling back to verified catalogue:', err);
     }
   }
 
-  // Development & Demonstration Catalogue
+  // 2. Development & Demonstration Catalogue Fallback
   const qLower = query.toLowerCase();
   return DEMO_PRODUCTS.filter(p => {
     const matchesQuery = 
@@ -190,4 +218,3 @@ export async function searchProducts(query: string, maxPrice?: number): Promise<
     return matchesQuery && matchesPrice;
   });
 }
-

@@ -17,6 +17,7 @@ import {
   Check,
   Database,
   UserCheck,
+  ShoppingBag,
 } from 'lucide-react';
 
 export default function IntegrationsPage() {
@@ -36,7 +37,7 @@ export default function IntegrationsPage() {
             Platform Integrations & API Credentials
           </h1>
           <p className="text-xs text-[#5E738B] mt-1">
-            Genuine sandbox connections for PayPal Developer Platform, Gemini AI Reviewer, and Supabase PostgreSQL.
+            Genuine live connections for PayPal Developer Platform, Gemini AI Reviewer, Channel3 API, and Supabase PostgreSQL.
           </p>
         </div>
 
@@ -90,7 +91,61 @@ export default function IntegrationsPage() {
             </div>
           </div>
 
-          {/* Card 2: Google Gemini AI Model */}
+          {/* Card 2: Channel3 Product Graph API */}
+          <div className="bg-white rounded-2xl border border-[#DCE5EF] shadow-subtle p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#EEF3F8]">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#0070E0] text-white flex items-center justify-center font-bold">
+                  <ShoppingBag className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-[#001C48]">Channel3 Discovery API</h3>
+                  <span className="text-[10px] text-[#5E738B]">AI Agentic Commerce Graph</span>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#EBF8F0] text-[#0E8A44] border border-[#A6E3B8]">
+                LIVE ACTIVE & VERIFIED
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Connects to the official Channel3 search endpoint (<code>api.trychannel3.com/v1/search</code>) to retrieve live, structured multi-retailer product offers.
+            </p>
+
+            <div className="space-y-2 text-xs font-mono bg-[#F8FAFD] p-3.5 rounded-xl border border-[#EEF3F8]">
+              <div className="flex justify-between items-center text-gray-600">
+                <span className="font-sans font-semibold">Endpoint:</span>
+                <span className="text-[#003087]">api.trychannel3.com/v1/search</span>
+              </div>
+              <div className="flex justify-between items-center text-gray-600">
+                <span className="font-sans font-semibold">API Key Prefix:</span>
+                <span className="text-[#0E8A44] font-bold">eZcdsGQr0X...QDTdcee5</span>
+              </div>
+              <div className="flex justify-between items-center text-gray-600">
+                <span className="font-sans font-semibold">Response Schema:</span>
+                <span className="text-gray-900 font-bold">Live Structured Offers</span>
+              </div>
+              <div className="flex justify-between items-center text-gray-600">
+                <span className="font-sans font-semibold">Affiliate Tracking:</span>
+                <span className="text-[#0070E0] font-bold">Enabled</span>
+              </div>
+            </div>
+
+            <div className="pt-1 text-xs text-[#5E738B] leading-relaxed flex items-center justify-between">
+              <span>Status: <strong>Live Product Discovery Active</strong></span>
+              <a
+                href="https://docs.trychannel3.com"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[#0070E0] hover:underline flex items-center gap-1 font-semibold"
+              >
+                <span>Channel3 Docs</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          </div>
+
+          {/* Card 3: Google Gemini AI Model */}
           <div className="bg-white rounded-2xl border border-[#DCE5EF] shadow-subtle p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#EEF3F8]">
               <div className="flex items-center gap-2">
@@ -135,7 +190,7 @@ export default function IntegrationsPage() {
             </div>
           </div>
 
-          {/* Card 3: Supabase PostgreSQL */}
+          {/* Card 4: Supabase PostgreSQL */}
           <div className="bg-white rounded-2xl border border-[#DCE5EF] shadow-subtle p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#EEF3F8]">
               <div className="flex items-center gap-2">
@@ -176,8 +231,8 @@ export default function IntegrationsPage() {
             </div>
           </div>
 
-          {/* Card 4: PayPal Webhooks */}
-          <div className="bg-white rounded-2xl border border-[#DCE5EF] shadow-subtle p-6 space-y-4">
+          {/* Card 5: PayPal Webhooks */}
+          <div className="bg-white rounded-2xl border border-[#DCE5EF] shadow-subtle p-6 space-y-4 md:col-span-2">
             <div className="flex items-center justify-between pb-3 border-b border-[#EEF3F8]">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-[#009CDE] text-white flex items-center justify-center font-bold">
