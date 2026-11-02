@@ -105,3 +105,4 @@ MANDATE performs authenticated, server-to-server operations:
 - **AI Integration**: Google Gemini 2.5 Flash with structured Zod schema validation.
 - **Payment Engine**: PayPal Developer REST APIs (v2/checkout/orders, capture, webhooks).
 - **Database**: PostgreSQL (Supabase schema with Row Level Security) and in-memory transactional fallback store.
+

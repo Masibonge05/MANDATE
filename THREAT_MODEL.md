@@ -57,3 +57,4 @@ MANDATE implements defense-in-depth across each attack vector:
 - **Attack Scenario**: An attacker sends fake `PAYMENT.CAPTURE.COMPLETED` payloads to `/api/webhooks/paypal`.
 - **MANDATE Mitigation**:
   MANDATE verifies cryptographic PayPal transmission headers (`paypal-transmission-id`, `paypal-transmission-sig`, `paypal-cert-url`) using PayPal's public keys. Furthermore, payment records require two-way confirmation before state transitions.
+
