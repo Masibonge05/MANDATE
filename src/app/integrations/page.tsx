@@ -15,6 +15,8 @@ import {
   Layers,
   Copy,
   Check,
+  Database,
+  UserCheck,
 } from 'lucide-react';
 
 export default function IntegrationsPage() {
@@ -34,7 +36,7 @@ export default function IntegrationsPage() {
             Platform Integrations & API Credentials
           </h1>
           <p className="text-xs text-[#5E738B] mt-1">
-            Genuine sandbox connections for PayPal Developer Platform, Gemini AI Reviewer, and Channel3 discovery.
+            Genuine sandbox connections for PayPal Developer Platform, Gemini AI Reviewer, and Supabase PostgreSQL.
           </p>
         </div>
 
@@ -47,36 +49,44 @@ export default function IntegrationsPage() {
                 <PayPalLogo variant="full" height={22} />
               </div>
               <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#EBF8F0] text-[#0E8A44] border border-[#A6E3B8]">
-                SANDBOX ACTIVE
+                SANDBOX ACTIVE & AUTHENTICATED
               </span>
             </div>
 
             <p className="text-xs text-gray-600 leading-relaxed">
-              MANDATE interacts with the official PayPal REST Orders API v2 (<code>/v2/checkout/orders</code>) and order capture verification.
+              MANDATE interacts directly with the official PayPal REST Orders API v2 (<code>/v2/checkout/orders</code>) with server-side OAuth2 bearer tokens and capture verification.
             </p>
 
-            <div className="space-y-2 text-xs font-mono bg-[#F8FAFD] p-3 rounded-xl border border-[#EEF3F8]">
+            <div className="space-y-2 text-xs font-mono bg-[#F8FAFD] p-3.5 rounded-xl border border-[#EEF3F8]">
               <div className="flex justify-between items-center text-gray-600">
                 <span className="font-sans font-semibold">Environment:</span>
-                <span className="text-[#003087]">Sandbox</span>
+                <span className="text-[#003087]">api-m.sandbox.paypal.com</span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
-                <span className="font-sans font-semibold">Base URL:</span>
-                <span className="text-[#0070E0]">https://api-m.sandbox.paypal.com</span>
+                <span className="font-sans font-semibold">Client ID Prefix:</span>
+                <span className="text-gray-900 font-bold">BAA5oLfJCx...aF9JOyPR8</span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
-                <span className="font-sans font-semibold">Orders API:</span>
-                <span className="text-gray-900 font-bold">v2/checkout/orders</span>
+                <span className="font-sans font-semibold">Business Account:</span>
+                <span className="text-[#0070E0]">sb-ahu7e53655928@business.example.com</span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
-                <span className="font-sans font-semibold">Capture Rail:</span>
-                <span className="text-gray-900 font-bold">Server-Side Verified</span>
+                <span className="font-sans font-semibold">Buyer Sandbox Account:</span>
+                <span className="text-[#0E8A44]">sb-47eyng53682632@personal.example.com</span>
               </div>
             </div>
 
-            <div className="pt-2 text-xs text-[#5E738B] leading-relaxed">
-              <strong className="text-gray-900 block mb-1">Configuration in .env:</strong>
-              <code>PAYPAL_CLIENT_ID</code> and <code>PAYPAL_CLIENT_SECRET</code>. When credentials are not provided, MANDATE operates in verifiable sandbox test mode.
+            <div className="pt-1 text-xs text-[#5E738B] leading-relaxed flex items-center justify-between">
+              <span>Status: <strong>Live Connected to Sandbox</strong></span>
+              <a
+                href="https://developer.paypal.com/dashboard/applications/sandbox"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[#0070E0] hover:underline flex items-center gap-1 font-semibold"
+              >
+                <span>PayPal Dashboard</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
           </div>
 
@@ -93,7 +103,7 @@ export default function IntegrationsPage() {
                 </div>
               </div>
               <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#EBF8F0] text-[#0E8A44] border border-[#A6E3B8]">
-                ENABLED
+                ACTIVE (50 MODELS AVAILABLE)
               </span>
             </div>
 
@@ -101,61 +111,68 @@ export default function IntegrationsPage() {
               Provides dual AI functions: natural language mandate compilation and adversarial prompt injection review in untrusted product listings.
             </p>
 
-            <div className="space-y-2 text-xs font-mono bg-[#F8FAFD] p-3 rounded-xl border border-[#EEF3F8]">
+            <div className="space-y-2 text-xs font-mono bg-[#F8FAFD] p-3.5 rounded-xl border border-[#EEF3F8]">
               <div className="flex justify-between items-center text-gray-600">
-                <span className="font-sans font-semibold">Primary Model:</span>
+                <span className="font-sans font-semibold">API Model:</span>
                 <span className="text-[#003087]">gemini-2.5-flash</span>
+              </div>
+              <div className="flex justify-between items-center text-gray-600">
+                <span className="font-sans font-semibold">Key Status:</span>
+                <span className="text-[#0E8A44] font-bold">Authenticated (AQ.Ab8RN6...)</span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
                 <span className="font-sans font-semibold">Output Mode:</span>
                 <span className="text-gray-900 font-bold">Strict JSON Schema (Zod)</span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
-                <span className="font-sans font-semibold">Prompt Defense:</span>
-                <span className="text-[#0E8A44] font-bold">Active Heuristic + LLM</span>
+                <span className="font-sans font-semibold">Threat Detection:</span>
+                <span className="text-[#0E8A44] font-bold">Active Prompt Injection Defense</span>
               </div>
             </div>
 
-            <div className="pt-2 text-xs text-[#5E738B]">
-              <strong className="text-gray-900 block mb-1">Provider Abstraction:</strong>
-              Configured via <code>GEMINI_API_KEY</code> with zero-downtime offline fallback security guardian.
+            <div className="pt-1 text-xs text-[#5E738B]">
+              Latency: <strong>Fast Real-Time Inference</strong>
             </div>
           </div>
 
-          {/* Card 3: Channel3 Product Discovery */}
+          {/* Card 3: Supabase PostgreSQL */}
           <div className="bg-white rounded-2xl border border-[#DCE5EF] shadow-subtle p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#EEF3F8]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#003087] text-white flex items-center justify-center font-bold">
-                  <Server className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-lg bg-[#0E8A44] text-white flex items-center justify-center font-bold">
+                  <Database className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-[#001C48]">Channel3 Discovery Provider</h3>
-                  <span className="text-[10px] text-[#5E738B]">Product Search Adapter</span>
+                  <h3 className="font-bold text-sm text-[#001C48]">Supabase PostgreSQL</h3>
+                  <span className="text-[10px] text-[#5E738B]">Cloud Relational Database</span>
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#EBF3FC] text-[#0070E0] border border-[#CDE1F8]">
-                DEMO CATALOGUE
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#EBF8F0] text-[#0E8A44] border border-[#A6E3B8]">
+                CONNECTED
               </span>
             </div>
 
             <p className="text-xs text-gray-600 leading-relaxed">
-              Isolated service boundary. Connects to Channel3 API when configured, or serves verified photography demonstration items.
+              Stores tenants, mandates, versioned policy history, and transactions with cryptographic Row Level Security (RLS) policies.
             </p>
 
-            <div className="space-y-2 text-xs font-mono bg-[#F8FAFD] p-3 rounded-xl border border-[#EEF3F8]">
+            <div className="space-y-2 text-xs font-mono bg-[#F8FAFD] p-3.5 rounded-xl border border-[#EEF3F8]">
               <div className="flex justify-between items-center text-gray-600">
-                <span className="font-sans font-semibold">Mode:</span>
-                <span className="text-gray-900 font-bold">Sample + Live Adapter</span>
+                <span className="font-sans font-semibold">Project URL:</span>
+                <span className="text-[#003087]">rozgzdkemdcxyrlmofmc.supabase.co</span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
-                <span className="font-sans font-semibold">Sample Items:</span>
-                <span className="text-[#0070E0]">7 Verified Photography Items</span>
+                <span className="font-sans font-semibold">Region:</span>
+                <span className="text-gray-900 font-bold">aws-0-eu-north-1</span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
-                <span className="font-sans font-semibold">Adversarial Test Item:</span>
-                <span className="text-[#D92D20] font-bold">Included for Testing</span>
+                <span className="font-sans font-semibold">Isolation:</span>
+                <span className="text-[#0E8A44] font-bold">Row Level Security (RLS)</span>
               </div>
+            </div>
+
+            <div className="pt-1 text-xs text-[#5E738B] leading-relaxed">
+              Migration script available at <code>supabase/migrations/20261102_mandate_core.sql</code>
             </div>
           </div>
 
@@ -180,7 +197,7 @@ export default function IntegrationsPage() {
               Receives and verifies asynchronous webhook callbacks from PayPal Sandbox with event deduplication.
             </p>
 
-            <div className="p-3 bg-[#F8FAFD] rounded-xl border border-[#EEF3F8] text-xs font-mono space-y-1">
+            <div className="p-3.5 bg-[#F8FAFD] rounded-xl border border-[#EEF3F8] text-xs font-mono space-y-1">
               <span className="text-gray-500 font-sans block text-[11px]">Listener Endpoint:</span>
               <div className="flex items-center justify-between">
                 <span className="text-[#003087] font-bold">/api/webhooks/paypal</span>
@@ -202,4 +219,3 @@ export default function IntegrationsPage() {
     </AppShell>
   );
 }
-

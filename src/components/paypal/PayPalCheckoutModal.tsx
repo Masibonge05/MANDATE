@@ -111,10 +111,17 @@ export const PayPalCheckoutModal: React.FC<PayPalCheckoutModalProps> = ({
                 </div>
               </div>
 
-              {/* Sandbox Notice */}
-              <div className="bg-[#F5F8FC] p-3 rounded-lg border border-[#DCE5EF] text-[11px] text-[#5E738B] leading-relaxed">
-                <strong className="text-gray-900 block mb-0.5">PayPal Sandbox Environment:</strong>
-                All payment operations run in the PayPal Sandbox test network. No real funds or credit cards are debited.
+              {/* Sandbox Notice & Buyer Account Hint */}
+              <div className="bg-[#F5F8FC] p-3 rounded-xl border border-[#DCE5EF] text-[11px] text-[#5E738B] leading-relaxed space-y-1">
+                <div className="flex justify-between items-center">
+                  <strong className="text-gray-900">PayPal Sandbox Environment</strong>
+                  <span className="text-[10px] bg-[#EBF3FC] text-[#0070E0] font-bold px-1.5 py-0.5 rounded">Live Sandbox</span>
+                </div>
+                <div>All payments execute in the PayPal Sandbox test network. No real funds are debited.</div>
+                <div className="pt-1 text-[10px] text-gray-700 font-mono bg-white p-1.5 rounded border border-[#EEF3F8]">
+                  <span className="font-sans font-semibold text-[#003087]">Personal Buyer Account: </span>
+                  sb-47eyng53682632@personal.example.com
+                </div>
               </div>
 
               {errorMessage && (
