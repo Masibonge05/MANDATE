@@ -4,7 +4,7 @@
  * and seamless fallback persistence for local demo and Render deployments.
  */
 
-import {
+import type {
   UserProfile,
   Mandate,
   MandateVersion,
@@ -13,8 +13,9 @@ import {
   AuditEvent,
   SystemAnalytics,
   Currency,
-} from './types';
-import { toCents, fromCents } from './policy-engine';
+} from './types.ts';
+import { toCents, fromCents } from './policy-engine.ts';
+import { SupabaseBridge } from './supabase-client.ts';
 
 // Default Demo User
 export const DEMO_USER: UserProfile = {
@@ -150,6 +151,7 @@ class DatabaseStore {
 
   public saveMandate(mandate: Mandate): void {
     this.mandates.set(mandate.id, mandate);
+    SupabaseBridge.persistMandate(mandate).catch(e => console.warn('[DB] Supabase mandate sync error:', e));
   }
 
   public updateMandateStatus(id: string, status: Mandate['status']): Mandate | null {
@@ -240,6 +242,7 @@ class DatabaseStore {
 
   public saveTransaction(tx: Transaction): void {
     this.transactions.set(tx.id, tx);
+    SupabaseBridge.persistTransaction(tx).catch(e => console.warn('[DB] Supabase transaction sync error:', e));
   }
 
   // --- Agents ---
@@ -263,6 +266,7 @@ class DatabaseStore {
       timestamp: new Date().toISOString(),
     };
     this.auditEvents.unshift(record);
+    SupabaseBridge.persistAudit(record).catch(e => console.warn('[DB] Supabase audit sync error:', e));
     return record;
   }
 

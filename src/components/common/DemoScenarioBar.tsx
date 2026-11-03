@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, ShieldAlert, UserCheck, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, UserCheck, RefreshCw, Sparkles, CheckCircle2, FlaskConical, AlertCircle } from 'lucide-react';
 
 interface DemoScenarioBarProps {
   onScenarioExecuted?: (scenarioKey: string) => void;
@@ -12,6 +12,7 @@ export const DemoScenarioBar: React.FC<DemoScenarioBarProps> = ({ onScenarioExec
   const router = useRouter();
   const [loadingScenario, setLoadingScenario] = useState<string | null>(null);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
   const runScenario = async (key: 'scenario-a' | 'scenario-b' | 'scenario-c') => {
     try {
@@ -105,27 +106,29 @@ export const DemoScenarioBar: React.FC<DemoScenarioBarProps> = ({ onScenarioExec
 
         if (onScenarioExecuted) onScenarioExecuted(key);
       } else {
-        alert(`Error executing scenario: ${data.error}`);
+        setErrorBanner(`Error executing scenario: ${data.error || 'Server rejected proposal'}`);
       }
     } catch (err: any) {
-      alert(`Scenario execution error: ${err.message}`);
+      setErrorBanner(`Scenario execution error: ${err.message}`);
     } finally {
       setLoadingScenario(null);
     }
   };
 
   const resetDemo = async () => {
-    if (!confirm('Reset demonstration data back to initial clean state?')) return;
     try {
       setLoadingScenario('reset');
+      setErrorBanner(null);
       const res = await fetch('/api/demo/reset', { method: 'POST' });
       if (res.ok) {
         setSuccessBanner('Demonstration state restored to baseline seed.');
         router.refresh();
         window.location.reload();
+      } else {
+        setErrorBanner('Failed to reset demo state.');
       }
     } catch (err: any) {
-      alert(`Reset error: ${err.message}`);
+      setErrorBanner(`Reset error: ${err.message}`);
     } finally {
       setLoadingScenario(null);
     }
@@ -180,6 +183,17 @@ export const DemoScenarioBar: React.FC<DemoScenarioBarProps> = ({ onScenarioExec
             <span>Scenario C: Human Approval ($79)</span>
           </button>
 
+          {/* Scenario D: Simulation Mode */}
+          <button
+            onClick={() => router.push('/mandates?simulate=true')}
+            disabled={loadingScenario !== null}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#0070E0]/20 hover:bg-[#0070E0]/30 border border-[#0070E0]/50 text-[#96C7F6] font-medium transition disabled:opacity-50"
+            title="Launch Mandate Simulation Mode with 5 preset test scenarios"
+          >
+            <FlaskConical className="w-3.5 h-3.5 text-[#009CDE]" />
+            <span>Scenario D: Simulation Mode</span>
+          </button>
+
           {/* Reset */}
           <button
             onClick={resetDemo}
@@ -188,7 +202,7 @@ export const DemoScenarioBar: React.FC<DemoScenarioBarProps> = ({ onScenarioExec
             title="Reset demonstration data"
           >
             <RefreshCw className={`w-3 h-3 ${loadingScenario === 'reset' ? 'animate-spin' : ''}`} />
-            <span>Reset</span>
+            <span>Reset Demo</span>
           </button>
         </div>
       </div>
@@ -200,6 +214,16 @@ export const DemoScenarioBar: React.FC<DemoScenarioBarProps> = ({ onScenarioExec
             <span>{successBanner}</span>
           </div>
           <button onClick={() => setSuccessBanner(null)} className="text-gray-400 hover:text-white">✕</button>
+        </div>
+      )}
+
+      {errorBanner && (
+        <div className="mt-2 bg-[#D92D20]/20 border border-[#D92D20]/40 text-[#F9A8A4] px-3 py-1 rounded text-[11px] flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5 text-[#D92D20]" />
+            <span>{errorBanner}</span>
+          </div>
+          <button onClick={() => setErrorBanner(null)} className="text-gray-400 hover:text-white">✕</button>
         </div>
       )}
     </div>

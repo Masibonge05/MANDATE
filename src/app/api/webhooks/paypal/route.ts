@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+// Cache processed webhook event IDs to prevent duplicate webhook delivery execution
+const PROCESSED_WEBHOOK_IDS = new Set<string>();
+
 export async function POST(req: Request) {
   try {
     const rawBody = await req.text();
@@ -16,6 +19,18 @@ export async function POST(req: Request) {
     const resource = event?.resource;
 
     console.log(`[PayPal Webhook Received]: ${eventType} (ID: ${eventId})`);
+
+    // Duplicate webhook delivery handling
+    if (PROCESSED_WEBHOOK_IDS.has(eventId)) {
+      console.log(`[PayPal Webhook] Duplicate event ${eventId} ignored.`);
+      return NextResponse.json({
+        received: true,
+        eventId,
+        status: 'duplicate_ignored',
+        message: 'Webhook event was previously processed.'
+      });
+    }
+    PROCESSED_WEBHOOK_IDS.add(eventId);
 
     // Verify webhook signature if PAYPAL_WEBHOOK_ID is configured
     const webhookId = process.env.PAYPAL_WEBHOOK_ID;

@@ -20,14 +20,17 @@ import {
   ArrowRight,
   ShieldCheck,
   Loader2,
+  FlaskConical,
 } from 'lucide-react';
 import { MandateCompilerModal } from '@/components/mandates/MandateCompilerModal';
+import { MandateSimulationModal } from '@/components/mandates/MandateSimulationModal';
 
 function MandatesContent() {
   const searchParams = useSearchParams();
   const [mandates, setMandates] = useState<Mandate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCompiler, setShowCompiler] = useState(searchParams.get('create') === 'true');
+  const [showSimulation, setShowSimulation] = useState(searchParams.get('simulate') === 'true');
 
   const fetchMandates = async () => {
     try {
@@ -72,13 +75,23 @@ function MandatesContent() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowCompiler(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#0070E0] hover:bg-[#005ea6] text-white text-xs font-bold rounded-xl shadow-sm transition"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>Compile New Mandate with AI</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setShowSimulation(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-[#DCE5EF] hover:bg-[#F8FAFD] text-[#003087] text-xs font-bold rounded-xl shadow-xs transition"
+          >
+            <FlaskConical className="w-4 h-4 text-[#0070E0]" />
+            <span>Simulation Mode (Dry-Run)</span>
+          </button>
+
+          <button
+            onClick={() => setShowCompiler(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-[#0070E0] hover:bg-[#005ea6] text-white text-xs font-bold rounded-xl shadow-sm transition"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Compile New Mandate with AI</span>
+          </button>
+        </div>
       </div>
 
       {/* Mandate List */}
@@ -214,6 +227,13 @@ function MandatesContent() {
           );
         })}
       </div>
+
+      {showSimulation && (
+        <MandateSimulationModal
+          mandates={mandates}
+          onClose={() => setShowSimulation(false)}
+        />
+      )}
 
       {showCompiler && (
         <MandateCompilerModal

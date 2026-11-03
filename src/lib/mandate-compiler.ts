@@ -34,8 +34,7 @@ export async function compileNaturalLanguageMandate(
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (apiKey) {
-    try {
-      const systemPrompt = `You are the MANDATE Policy Compiler.
+    const systemPrompt = `You are the MANDATE Policy Compiler.
 Convert this natural-language financial instruction into a structured financial mandate.
 
 STRICT INSTRUCTIONS:
@@ -47,31 +46,35 @@ STRICT INSTRUCTIONS:
 6. Check for conditional approvals: e.g. "Electronics require my approval" -> add "electronics" to approvalRequiredCategories.
 7. Return STRICT JSON matching the schema with no conversational fluff.`;
 
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: `${systemPrompt}\n\nUSER PROMPT:\n"${promptText}"\nCURRENCY: ${userCurrency}` }]
-          }],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            temperature: 0.1,
-          }
-        }),
-      });
+    const candidateModels = [process.env.GEMINI_MODEL || 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'];
+    for (const modelName of candidateModels) {
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{ text: `${systemPrompt}\n\nUSER PROMPT:\n"${promptText}"\nCURRENCY: ${userCurrency}` }]
+            }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              temperature: 0.1,
+            }
+          }),
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (jsonText) {
-          const rawParsed = JSON.parse(jsonText);
-          return CompiledMandateSchema.parse(rawParsed);
+        if (res.ok) {
+          const data = await res.json();
+          const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (jsonText) {
+            const rawParsed = JSON.parse(jsonText);
+            return CompiledMandateSchema.parse(rawParsed);
+          }
         }
+      } catch (err) {
+        console.warn(`[Mandate Compiler] Model ${modelName} encountered issue, trying fallback:`, err);
       }
-    } catch (err) {
-      console.warn('[Mandate Compiler] Gemini compilation failed, applying NLP fallback compiler:', err);
     }
   }
 

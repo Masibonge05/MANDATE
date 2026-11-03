@@ -94,41 +94,48 @@ Return STRICT JSON ONLY conforming to:
         agentReasoning: agentReasoning,
       });
 
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: `${systemPrompt}\n\nTRANSACTION TO REVIEW:\n${userContent}` }]
-          }],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            temperature: 0.1,
+      const candidateModels = [process.env.GEMINI_MODEL || 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'];
+      for (const modelName of candidateModels) {
+        try {
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{ text: `${systemPrompt}\n\nTRANSACTION TO REVIEW:\n${userContent}` }]
+              }],
+              generationConfig: {
+                responseMimeType: 'application/json',
+                temperature: 0.1,
+              }
+            }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (rawJsonText) {
+              const parsed = JSON.parse(rawJsonText);
+              const validated = AIReviewSchema.parse(parsed);
+
+              // Defense in depth: if heuristic identified prompt injection, ensure high risk
+              if (hasHeuristicInjection) {
+                validated.prompt_injection_detected = true;
+                validated.risk_level = 'HIGH';
+                validated.recommendation = 'BLOCK';
+                validated.explanation += ' [High-confidence adversarial injection phrase detected in untrusted listing].';
+              }
+
+              return {
+                ...validated,
+                analyzedAt: new Date().toISOString(),
+                modelUsed: modelName,
+              };
+            }
           }
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (rawJsonText) {
-          const parsed = JSON.parse(rawJsonText);
-          const validated = AIReviewSchema.parse(parsed);
-
-          // Defense in depth: if heuristic identified prompt injection, ensure high risk
-          if (hasHeuristicInjection) {
-            validated.prompt_injection_detected = true;
-            validated.risk_level = 'HIGH';
-            validated.recommendation = 'BLOCK';
-            validated.explanation += ' [High-confidence adversarial injection phrase detected in untrusted listing].';
-          }
-
-          return {
-            ...validated,
-            analyzedAt: new Date().toISOString(),
-            modelUsed: 'gemini-2.5-flash',
-          };
+        } catch (err) {
+          console.warn(`[AI Reviewer] Model ${modelName} error, trying fallback:`, err);
         }
       }
     } catch (err) {

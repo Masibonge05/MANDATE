@@ -105,6 +105,36 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Hackathon Demonstration Controls */}
+          <div className="bg-white rounded-2xl border border-[#DCE5EF] shadow-subtle p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#EEF3F8]">
+              <div className="flex items-center gap-2.5">
+                <Shield className="w-5 h-5 text-[#B46500]" />
+                <h3 className="font-bold text-sm text-[#001C48]">Hackathon Demo Environment</h3>
+              </div>
+              <span className="text-[10px] font-bold bg-[#FEF7EB] text-[#B46500] border border-[#F8D8A3] px-2 py-0.5 rounded-full">
+                EVALUATION READY
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Reset transactions, audit ledger events, and mandate budgets back to the initial baseline seed state for clean scenario demonstrations.
+            </p>
+
+            <button
+              type="button"
+              onClick={async () => {
+                if (confirm('Reset all transaction history and restore seed budget?')) {
+                  const res = await fetch('/api/demo/reset', { method: 'POST' });
+                  if (res.ok) alert('Demonstration environment reset to baseline seed.');
+                }
+              }}
+              className="px-4 py-2 bg-white border border-[#DCE5EF] hover:bg-gray-50 text-gray-700 font-semibold text-xs rounded-xl shadow-xs transition"
+            >
+              Reset Demo State to Baseline Seed
+            </button>
+          </div>
+
           {/* Save Action */}
           <div className="flex items-center justify-between">
             {saved ? (

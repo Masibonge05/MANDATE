@@ -153,12 +153,12 @@ export default function IntegrationsPage() {
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-[#001C48]">Gemini 2.5 Flash</h3>
+                  <h3 className="font-bold text-sm text-[#001C48]">Gemini Flash</h3>
                   <span className="text-[10px] text-[#5E738B]">Google DeepMind AI Engine</span>
                 </div>
               </div>
               <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#EBF8F0] text-[#0E8A44] border border-[#A6E3B8]">
-                ACTIVE (50 MODELS AVAILABLE)
+                ACTIVE &amp; AUTHENTICATED
               </span>
             </div>
 
@@ -169,7 +169,7 @@ export default function IntegrationsPage() {
             <div className="space-y-2 text-xs font-mono bg-[#F8FAFD] p-3.5 rounded-xl border border-[#EEF3F8]">
               <div className="flex justify-between items-center text-gray-600">
                 <span className="font-sans font-semibold">API Model:</span>
-                <span className="text-[#003087]">gemini-2.5-flash</span>
+                <span className="text-[#003087]">gemini-flash-latest (fallback cascade)</span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
                 <span className="font-sans font-semibold">Key Status:</span>

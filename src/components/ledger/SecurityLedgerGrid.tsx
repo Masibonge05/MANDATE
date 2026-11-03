@@ -176,12 +176,36 @@ export const SecurityLedgerGrid: React.FC<SecurityLedgerGridProps> = ({ transact
   // Filtered rows by status
   const rowData = useMemo(() => {
     if (statusFilter === 'ALL') return transactions;
+    if (statusFilter === 'INJECTIONS') {
+      return transactions.filter(t => t.aiReview?.prompt_injection_detected);
+    }
     return transactions.filter(t => t.status === statusFilter);
   }, [transactions, statusFilter]);
+
+  // Counts for filter pills
+  const counts = useMemo(() => {
+    return {
+      ALL: transactions.length,
+      APPROVED: transactions.filter(t => t.status === 'APPROVED').length,
+      REQUIRES_APPROVAL: transactions.filter(t => t.status === 'REQUIRES_APPROVAL').length,
+      BLOCKED: transactions.filter(t => t.status === 'BLOCKED').length,
+      PAID: transactions.filter(t => t.status === 'PAID').length,
+      INJECTIONS: transactions.filter(t => t.aiReview?.prompt_injection_detected).length,
+    };
+  }, [transactions]);
 
   const onRowClicked = (event: RowClickedEvent) => {
     setSelectedTx(event.data as Transaction);
   };
+
+  const filterTabs = [
+    { key: 'ALL', label: 'All Records', count: counts.ALL },
+    { key: 'PAID', label: 'Paid (PayPal)', count: counts.PAID },
+    { key: 'APPROVED', label: 'Approved', count: counts.APPROVED },
+    { key: 'REQUIRES_APPROVAL', label: 'Needs Approval', count: counts.REQUIRES_APPROVAL },
+    { key: 'BLOCKED', label: 'Blocked', count: counts.BLOCKED },
+    { key: 'INJECTIONS', label: 'Adversarial Injections', count: counts.INJECTIONS, isAlert: true },
+  ];
 
   return (
     <div className="space-y-4">
@@ -199,21 +223,39 @@ export const SecurityLedgerGrid: React.FC<SecurityLedgerGridProps> = ({ transact
           />
         </div>
 
-        {/* Status Filter Buttons */}
+        {/* Status Filter Buttons with live counts */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          {['ALL', 'APPROVED', 'REQUIRES_APPROVAL', 'BLOCKED', 'PAID'].map((st) => (
-            <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition ${
-                statusFilter === st
-                  ? 'bg-[#003087] text-white shadow-xs'
-                  : 'bg-[#F5F8FC] text-[#5E738B] hover:bg-[#EEF3F8] hover:text-[#142B4A]'
-              }`}
-            >
-              {st.replace('_', ' ')}
-            </button>
-          ))}
+          {filterTabs.map((tab) => {
+            const isActive = statusFilter === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setStatusFilter(tab.key)}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 ${
+                  isActive
+                    ? tab.isAlert
+                      ? 'bg-[#D92D20] text-white shadow-xs'
+                      : 'bg-[#003087] text-white shadow-xs'
+                    : tab.isAlert && tab.count > 0
+                    ? 'bg-[#FEF3F2] text-[#D92D20] border border-[#F9A8A4] hover:bg-[#FEE4E2]'
+                    : 'bg-[#F5F8FC] text-[#5E738B] hover:bg-[#EEF3F8] hover:text-[#142B4A]'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : tab.isAlert && tab.count > 0
+                      ? 'bg-[#D92D20] text-white animate-pulse'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

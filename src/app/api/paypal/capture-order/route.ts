@@ -21,10 +21,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Transaction not found for this order ID' }, { status: 404 });
     }
 
-    // Never capture an order if transaction is BLOCKED or REJECTED
-    if (tx.status === 'BLOCKED' || tx.status === 'REJECTED') {
+    // Idempotency: Return early if already captured and paid
+    if (tx.status === 'PAID') {
       return NextResponse.json({
-        error: `Security violation: Cannot capture payment for ${tx.status} transaction`,
+        success: true,
+        alreadyCaptured: true,
+        message: 'Order has already been captured and finalized.',
+        transaction: tx,
+      });
+    }
+
+    // Never capture an order if transaction is BLOCKED, REJECTED, or still REQUIRES_APPROVAL
+    if (tx.status === 'BLOCKED' || tx.status === 'REJECTED' || tx.status === 'REQUIRES_APPROVAL') {
+      return NextResponse.json({
+        error: `Security violation: Cannot capture payment for ${tx.status} transaction (Requires human authorization first)`,
       }, { status: 403 });
     }
 
