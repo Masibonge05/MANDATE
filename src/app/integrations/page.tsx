@@ -119,7 +119,7 @@ export default function IntegrationsPage() {
               </div>
               <div className="flex justify-between items-center text-gray-600">
                 <span className="font-sans font-semibold">API Key Prefix:</span>
-                <span className="text-[#0E8A44] font-bold">eZcdsGQr0X...QDTdcee5</span>
+                <span className="text-[#0E8A44] font-bold">ch3_live_••••••••••••</span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
                 <span className="font-sans font-semibold">Response Schema:</span>

@@ -206,7 +206,7 @@
                 "type": "object",
                 "required": ["orderId"],
                 "properties": {
-                  "orderId": { "type": "string", "example": "8JM52078C7971032U" }
+                  "orderId": { "type": "string", "example": "ORD-SAMPLE-001" }
                 }
               }
             }
@@ -299,7 +299,7 @@
             }
           },
           "userPrompt": { "type": "string", "example": "Find a good camera gift for my sister under $100" },
-          "idempotencyKey": { "type": "string", "example": "idemp-9a8b7c6d5e" }
+          "idempotencyKey": { "type": "string", "example": "idemp-sample-uuid-001" }
         }
       },
       "TransactionProposalResponse": {
@@ -307,7 +307,7 @@
         "properties": {
           "transaction": { "$ref": "#/components/schemas/Transaction" },
           "combinedDecision": { "type": "string", "enum": ["APPROVED", "BLOCKED", "REQUIRES_APPROVAL"] },
-          "paypalApprovalUrl": { "type": "string", "nullable": true, "example": "https://www.sandbox.paypal.com/checkoutnow?token=8JM52078C7971032U" },
+          "paypalApprovalUrl": { "type": "string", "nullable": true, "example": "https://www.sandbox.paypal.com/checkoutnow?token=SAMPLE-APPROVAL-TOKEN" },
           "decisionReason": { "type": "string" }
         }
       },
