@@ -32,6 +32,11 @@ export interface PayPalCaptureResult {
   rawResponse?: any;
 }
 
+export interface WebhookVerificationResult {
+  verified: boolean;
+  reason?: string;
+}
+
 export class PayPalService {
   private static get baseUrl(): string {
     return process.env.PAYPAL_BASE_URL || 'https://api-m.sandbox.paypal.com';
@@ -43,6 +48,14 @@ export class PayPalService {
 
   private static get clientSecret(): string | undefined {
     return process.env.PAYPAL_CLIENT_SECRET;
+  }
+
+  /**
+   * Returns the absolute application base URL (server-side safe).
+   * Falls back to localhost:3000 if not configured.
+   */
+  public static get appBaseUrl(): string {
+    return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   }
 
   /**
@@ -85,10 +98,15 @@ export class PayPalService {
   }
 
   /**
-   * Create a PayPal v2 Sandbox Order
+   * Create a PayPal v2 Sandbox Order.
+   * Return URL and Cancel URL are always guaranteed to be absolute URLs.
    */
   public static async createOrder(params: CreateOrderParams): Promise<PayPalOrderResult> {
     const isLive = this.isConfigured();
+
+    const baseUrl = this.appBaseUrl.replace(/\/$/, '');
+    const defaultReturnUrl = `${baseUrl}/ledger?status=success&orderId=${params.transactionId}`;
+    const defaultCancelUrl = `${baseUrl}/api/paypal/cancel-order`;
 
     if (isLive) {
       try {
@@ -126,8 +144,8 @@ export class PayPalService {
             brand_name: 'MANDATE Spending Gateway',
             landing_page: 'NO_PREFERENCE',
             user_action: 'PAY_NOW',
-            return_url: params.returnUrl || 'http://localhost:3000/ledger?status=success',
-            cancel_url: params.cancelUrl || 'http://localhost:3000/ledger?status=cancelled',
+            return_url: params.returnUrl || defaultReturnUrl,
+            cancel_url: params.cancelUrl || defaultCancelUrl,
           }
         };
 
@@ -172,7 +190,8 @@ export class PayPalService {
   }
 
   /**
-   * Capture an Approved PayPal Order from the server
+   * Capture an Approved PayPal Order from the server.
+   * Returns complete capture details including explicit status.
    */
   public static async captureOrder(orderId: string): Promise<PayPalCaptureResult> {
     const isLive = this.isConfigured();
@@ -197,10 +216,15 @@ export class PayPalService {
         const data = await res.json();
         const capture = data.purchase_units?.[0]?.payments?.captures?.[0];
 
+        const captureStatus = capture?.status as 'COMPLETED' | 'DENIED' | 'PENDING' | 'FAILED';
+        if (!captureStatus) {
+          throw new Error('PayPal capture response missing capture status');
+        }
+
         return {
-          captureId: capture?.id || `CAP-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+          captureId: capture?.id || `CAP-UNKNOWN-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
           orderId: data.id,
-          status: (capture?.status as any) || 'COMPLETED',
+          status: captureStatus,
           payerEmail: data.payer?.email_address || 'buyer@sandbox.paypal.com',
           amountCaptured: parseFloat(capture?.amount?.value || '0'),
           currency: capture?.amount?.currency_code || 'USD',
@@ -222,5 +246,67 @@ export class PayPalService {
       currency: 'USD',
     };
   }
-}
 
+  /**
+   * Verify a PayPal webhook signature using PayPal's official
+   * /v1/notifications/verify-webhook-signature API.
+   *
+   * This guarantees authenticity and prevents spoofed webhook payloads.
+   */
+  public static async verifyWebhookSignature(params: {
+    transmissionId: string;
+    transmissionTime: string;
+    transmissionSig: string;
+    certUrl: string;
+    authAlgo?: string;
+    webhookId: string;
+    rawBody: string;
+  }): Promise<WebhookVerificationResult> {
+    if (!this.isConfigured()) {
+      return { verified: false, reason: 'PayPal credentials not configured' };
+    }
+
+    try {
+      let webhookEvent: any;
+      try {
+        webhookEvent = JSON.parse(params.rawBody);
+      } catch {
+        return { verified: false, reason: 'Malformed webhook body — invalid JSON' };
+      }
+
+      const token = await this.getAccessToken();
+      const verifyPayload = {
+        transmission_id: params.transmissionId,
+        transmission_time: params.transmissionTime,
+        cert_url: params.certUrl,
+        auth_algo: params.authAlgo || 'SHA256withRSA',
+        transmission_sig: params.transmissionSig,
+        webhook_id: params.webhookId,
+        webhook_event: webhookEvent,
+      };
+
+      const res = await fetch(`${this.baseUrl}/v1/notifications/verify-webhook-signature`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(verifyPayload),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        return { verified: false, reason: `PayPal verification API error: ${res.status} ${errText}` };
+      }
+
+      const data = await res.json();
+      const verified = data.verification_status === 'SUCCESS';
+      return {
+        verified,
+        reason: verified ? undefined : `PayPal returned verification_status: ${data.verification_status}`,
+      };
+    } catch (err: any) {
+      return { verified: false, reason: `Verification exception: ${err?.message}` };
+    }
+  }
+}

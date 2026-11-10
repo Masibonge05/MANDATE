@@ -305,6 +305,14 @@ class DatabaseStore {
     return record;
   }
 
+  public recordAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>): AuditEvent {
+    return this.recordAudit(event);
+  }
+
+  public isWebhookProcessed(eventId: string): boolean {
+    return this.auditEvents.some(e => (e.metadata as any)?.eventId === eventId);
+  }
+
   public getAuditEvents(limit = 100): AuditEvent[] {
     return this.auditEvents.slice(0, limit);
   }

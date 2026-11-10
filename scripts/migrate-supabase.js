@@ -4,7 +4,12 @@
 
 const { Client } = require('pg');
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres.rozgzdkemdcxyrlmofmc:Masibonge%40010505@aws-0-eu-north-1.pooler.supabase.com:5432/postgres';
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  console.error('ERROR: DATABASE_URL environment variable is required to run migrations.');
+  process.exit(1);
+}
 
 async function migrate() {
   const client = new Client({

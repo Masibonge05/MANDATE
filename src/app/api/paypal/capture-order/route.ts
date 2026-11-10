@@ -31,7 +31,14 @@ export async function POST(req: Request) {
       });
     }
 
-    // Never capture an order if transaction is BLOCKED, REJECTED, or still REQUIRES_APPROVAL
+    // Terminal states: Do not retry capture if transaction was already cancelled or expired or failed
+    if (tx.status === 'PAYMENT_FAILED' || tx.status === 'CANCELLED' || tx.status === 'EXPIRED') {
+      return NextResponse.json({
+        error: `Cannot capture: transaction is already in terminal state ${tx.status}.`,
+      }, { status: 409 });
+    }
+
+    // Security violation: Never capture an order if transaction is BLOCKED, REJECTED, or still REQUIRES_APPROVAL
     if (tx.status === 'BLOCKED' || tx.status === 'REJECTED' || tx.status === 'REQUIRES_APPROVAL') {
       return NextResponse.json({
         error: `Security violation: Cannot capture payment for ${tx.status} transaction (Requires human authorization first)`,
@@ -41,7 +48,44 @@ export async function POST(req: Request) {
     // Capture the approved PayPal order from the server
     const captureResult = await PayPalService.captureOrder(orderId);
 
-    // Commit financial budget atomically
+    // CRITICAL: Verify capture.status === 'COMPLETED' before marking PAID or committing budget
+    if (captureResult.status !== 'COMPLETED') {
+      // Capture was not completed (e.g. DENIED, FAILED, PENDING)
+      // Release the reserved budget back to the mandate
+      db.releaseReservedBudget(tx.mandateId, tx.amount);
+
+      const now = new Date().toISOString();
+      tx.status = 'PAYMENT_FAILED';
+      tx.paypalCaptureId = captureResult.captureId;
+      tx.paypalPaymentStatus = captureResult.status;
+      tx.updatedAt = now;
+      db.saveTransaction(tx);
+
+      db.recordAudit({
+        userId: tx.userId,
+        transactionId: tx.id,
+        mandateId: tx.mandateId,
+        eventType: 'PAYPAL_PAYMENT_FAILED',
+        severity: 'WARNING',
+        title: `PayPal Capture ${captureResult.status}: $${tx.amount.toFixed(2)}`,
+        description: `PayPal capture returned status ${captureResult.status} (not COMPLETED). Reserved budget of $${tx.amount.toFixed(2)} released. Capture ID: ${captureResult.captureId}.`,
+        metadata: {
+          orderId,
+          captureId: captureResult.captureId,
+          captureStatus: captureResult.status,
+          amount: tx.amount,
+        },
+      });
+
+      return NextResponse.json({
+        success: false,
+        error: `PayPal capture did not complete: status was ${captureResult.status}`,
+        captureStatus: captureResult.status,
+        transaction: tx,
+      }, { status: 402 });
+    }
+
+    // Capture is confirmed COMPLETED — commit financial budget atomically
     db.commitReservedPayment(tx.mandateId, tx.amount);
 
     const now = new Date().toISOString();
@@ -54,7 +98,7 @@ export async function POST(req: Request) {
 
     // Immutable audit entry
     db.recordAudit({
-      userId: db.user.id,
+      userId: tx.userId,
       transactionId: tx.id,
       mandateId: tx.mandateId,
       eventType: 'PAYPAL_PAYMENT_CAPTURED',
@@ -84,4 +128,3 @@ export async function POST(req: Request) {
     }, { status: isUnapproved ? 422 : 500 });
   }
 }
-
