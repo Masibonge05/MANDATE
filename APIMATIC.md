@@ -97,3 +97,4 @@ const proposal = await client.gateway.proposeTransaction({
 1. **Interoperability**: Autonomous agents built with any framework (Python, Node, Go) can consume MANDATE via native, strongly-typed SDKs.
 2. **Reproducibility**: APIMatic standardizes API contracts, enabling hackathon judges and evaluators to test API endpoints in their preferred tooling.
 3. **Zero-Trust Enforcement**: The generated SDKs strictly enforce required schema fields (`agentId`, `mandateId`, `idempotencyKey`) before requests reach the network.
+

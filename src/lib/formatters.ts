@@ -10,6 +10,7 @@ export function formatCurrency(amount: number, currency: Currency | string = 'US
     EUR: '€',
     GBP: '£',
     CAD: 'CA$',
+    ZAR: 'R',
   };
   const sym = symbolMap[currency.toUpperCase()] || '$';
   return `${sym}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

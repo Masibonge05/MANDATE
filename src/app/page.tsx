@@ -62,16 +62,16 @@ export default function LandingPage() {
       <section className="pt-16 pb-20 px-6 max-w-7xl mx-auto text-center space-y-6">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EBF3FC] border border-[#CDE1F8] text-[#003087] text-xs font-semibold">
           <ShieldCheck className="w-4 h-4 text-[#0070E0]" />
-          <span>Independent Authorization Gateway Between AI Agents & Payment Infrastructure</span>
+          <span>AI Purchasing Assistant & Spending Control for Small Businesses</span>
         </div>
 
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#001C48] tracking-tight max-w-4xl mx-auto leading-tight">
-          Let AI agents transact. <br />
-          <span className="text-[#0070E0]">You decide what they are authorised to spend.</span>
+          Let AI handle the shopping. <br />
+          <span className="text-[#0070E0]">You stay in control of the money.</span>
         </h1>
 
         <p className="text-base sm:text-lg text-[#5E738B] max-w-2xl mx-auto leading-relaxed">
-          MANDATE solves the AI agent financial risk dilemma. Natural language financial permissions convert into structured, deterministic spending policies before any proposal can reach PayPal.
+          Business owners want the efficiency of AI purchasing agents without giving bots unlimited access to company funds. MANDATE lets you set spending limits, approved merchants, and approval rules in plain English — and independently evaluates every proposed transaction before it reaches PayPal.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -79,7 +79,7 @@ export default function LandingPage() {
             href="/dashboard"
             className="w-full sm:w-auto px-8 py-3.5 bg-[#003087] hover:bg-[#001C48] text-white font-bold text-base rounded-xl shadow-md transition flex items-center justify-center gap-2"
           >
-            <span>Open Financial Console</span>
+            <span>Open Dashboard</span>
             <ChevronRight className="w-5 h-5" />
           </Link>
           <Link
@@ -87,7 +87,7 @@ export default function LandingPage() {
             className="w-full sm:w-auto px-8 py-3.5 bg-white border border-[#DCE5EF] hover:bg-[#F8FAFD] text-[#003087] font-bold text-base rounded-xl transition shadow-xs flex items-center justify-center gap-2"
           >
             <Bot className="w-5 h-5 text-[#0070E0]" />
-            <span>Test Autonomous Agent</span>
+            <span>Try AI Shopping Assistant</span>
           </Link>
         </div>
 
