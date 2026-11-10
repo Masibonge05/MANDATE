@@ -3,9 +3,12 @@ import { db } from '@/lib/db';
 import { Mandate } from '@/lib/types';
 import { CompiledMandateSchema } from '@/lib/mandate-compiler';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const mandates = db.getMandates();
+    const authUserId = req.headers.get('x-user-id');
+    const mandates = authUserId
+      ? db.getMandates().filter(m => m.userId === authUserId)
+      : db.getMandates();
     return NextResponse.json({ mandates });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch mandates' }, { status: 500 });

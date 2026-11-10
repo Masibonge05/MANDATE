@@ -76,10 +76,12 @@ export async function POST(req: Request) {
     });
 
   } catch (error: any) {
-    console.error('[PayPal Capture API Error]:', error);
+    const msg = error?.message || '';
+    const isUnapproved = msg.includes('ORDER_NOT_APPROVED') || msg.includes('422');
     return NextResponse.json({
-      error: error?.message || 'PayPal capture failed on server',
-    }, { status: 500 });
+      error: isUnapproved ? 'ORDER_NOT_APPROVED: Payer has not yet approved the order on PayPal Sandbox.' : (error?.message || 'PayPal capture failed on server'),
+      details: msg,
+    }, { status: isUnapproved ? 422 : 500 });
   }
 }
 

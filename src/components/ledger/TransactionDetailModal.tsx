@@ -95,6 +95,9 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                   {transaction.product.category}
                 </span>
                 <span className="text-gray-500">Qty: {transaction.product.quantity}</span>
+                <span className="flex items-center gap-1 font-semibold text-[#003087] bg-[#EBF3FC] px-2 py-0.5 rounded border border-[#CDE1F8] text-[11px]">
+                  Policy: {transaction.mandateName} (v{transaction.mandateVersion || 1}.0)
+                </span>
               </div>
             </div>
 

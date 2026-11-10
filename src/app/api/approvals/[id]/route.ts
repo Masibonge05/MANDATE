@@ -16,6 +16,14 @@ export async function POST(
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
 
+    // Cross-tenant authorization check
+    const authUserId = req.headers.get('x-user-id') || db.user.id;
+    if (tx.userId !== authUserId) {
+      return NextResponse.json({
+        error: 'Forbidden: You cannot review or approve transactions belonging to another user tenant.',
+      }, { status: 403 });
+    }
+
     if (tx.status !== 'REQUIRES_APPROVAL') {
       return NextResponse.json({
         error: `Transaction cannot be acted upon in status: ${tx.status}`,

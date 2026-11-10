@@ -46,7 +46,7 @@ STRICT INSTRUCTIONS:
 6. Check for conditional approvals: e.g. "Electronics require my approval" -> add "electronics" to approvalRequiredCategories.
 7. Return STRICT JSON matching the schema with no conversational fluff.`;
 
-    const candidateModels = [process.env.GEMINI_MODEL || 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'];
+    const candidateModels = [process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
     for (const modelName of candidateModels) {
       try {
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;

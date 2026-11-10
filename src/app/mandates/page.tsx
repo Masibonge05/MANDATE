@@ -21,9 +21,11 @@ import {
   ShieldCheck,
   Loader2,
   FlaskConical,
+  History,
 } from 'lucide-react';
 import { MandateCompilerModal } from '@/components/mandates/MandateCompilerModal';
 import { MandateSimulationModal } from '@/components/mandates/MandateSimulationModal';
+import { MandateVersionHistoryModal } from '@/components/mandates/MandateVersionHistoryModal';
 
 function MandatesContent() {
   const searchParams = useSearchParams();
@@ -31,6 +33,7 @@ function MandatesContent() {
   const [loading, setLoading] = useState(true);
   const [showCompiler, setShowCompiler] = useState(searchParams.get('create') === 'true');
   const [showSimulation, setShowSimulation] = useState(searchParams.get('simulate') === 'true');
+  const [selectedMandateForHistory, setSelectedMandateForHistory] = useState<Mandate | null>(null);
 
   const fetchMandates = async () => {
     try {
@@ -213,6 +216,15 @@ function MandatesContent() {
                   >
                     Revoke
                   </button>
+
+                  <button
+                    onClick={() => setSelectedMandateForHistory(m)}
+                    className="px-3 py-1.5 rounded-lg border border-[#DCE5EF] hover:bg-[#F0F5FA] text-[#003087] text-xs font-semibold flex items-center gap-1.5 transition"
+                    title="Inspect policy change history and previous limits"
+                  >
+                    <History className="w-3.5 h-3.5 text-[#0070E0]" />
+                    <span>Version History</span>
+                  </button>
                 </div>
 
                 <Link
@@ -242,6 +254,13 @@ function MandatesContent() {
             setShowCompiler(false);
             fetchMandates();
           }}
+        />
+      )}
+
+      {selectedMandateForHistory && (
+        <MandateVersionHistoryModal
+          mandate={selectedMandateForHistory}
+          onClose={() => setSelectedMandateForHistory(null)}
         />
       )}
     </div>

@@ -6,8 +6,13 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
     const mandateId = searchParams.get('mandateId');
+    const authUserId = req.headers.get('x-user-id');
 
     let txs = db.getTransactions();
+
+    if (authUserId) {
+      txs = txs.filter(t => t.userId === authUserId);
+    }
 
     if (status) {
       txs = txs.filter(t => t.status === status);

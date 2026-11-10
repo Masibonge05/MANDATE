@@ -94,7 +94,7 @@ Return STRICT JSON ONLY conforming to:
         agentReasoning: agentReasoning,
       });
 
-      const candidateModels = [process.env.GEMINI_MODEL || 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'];
+      const candidateModels = [process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
       for (const modelName of candidateModels) {
         try {
           const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;

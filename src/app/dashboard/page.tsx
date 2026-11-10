@@ -18,6 +18,7 @@ import {
   Plus,
   RefreshCw,
   ShoppingBag,
+  CheckCircle2,
 } from 'lucide-react';
 import { PayPalLogo } from '@/components/common/PayPalLogo';
 import { MandateCompilerModal } from '@/components/mandates/MandateCompilerModal';
@@ -96,76 +97,76 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Top Metric Cards */}
+        {/* Top Metric Cards: Strictly Separated Financial Figures */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Active Mandates */}
+          {/* Card 1: Captured Spending (Strictly PAID via PayPal) */}
           <div className="bg-white p-5 rounded-2xl border border-[#DCE5EF] shadow-subtle flex flex-col justify-between space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#5E738B]">Active Mandates</span>
-              <div className="w-8 h-8 rounded-lg bg-[#003087]/10 flex items-center justify-center text-[#003087]">
-                <FileCheck2 className="w-4 h-4" />
-              </div>
-            </div>
-            <div>
-              <div className="text-2xl font-black text-[#001C48]">
-                {activeMandates.length}
-              </div>
-              <div className="text-[11px] text-[#5E738B] mt-0.5">
-                Total budget capped across policies
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Spending Authorized vs Blocked */}
-          <div className="bg-white p-5 rounded-2xl border border-[#DCE5EF] shadow-subtle flex flex-col justify-between space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#5E738B]">Authorized Spending</span>
+              <span className="text-xs font-semibold text-[#5E738B]">Captured Spending</span>
               <div className="w-8 h-8 rounded-lg bg-[#0E8A44]/10 flex items-center justify-center text-[#0E8A44]">
-                <DollarSign className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4" />
               </div>
             </div>
             <div>
               <div className="text-2xl font-black text-[#0E8A44]">
-                {formatCurrency(analytics?.totalAuthorizedSpending || 0)}
+                {formatCurrency(analytics?.capturedSpending ?? analytics?.totalAuthorizedSpending ?? 0)}
               </div>
               <div className="text-[11px] text-gray-500 mt-0.5">
-                Processed via PayPal Sandbox
+                Completed & captured via PayPal
               </div>
             </div>
           </div>
 
-          {/* Card 3: Blocked Rogue Spending */}
+          {/* Card 2: Reserved Spending in Flight */}
           <div className="bg-white p-5 rounded-2xl border border-[#DCE5EF] shadow-subtle flex flex-col justify-between space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#5E738B]">Blocked at Gateway</span>
-              <div className="w-8 h-8 rounded-lg bg-[#D92D20]/10 flex items-center justify-center text-[#D92D20]">
-                <ShieldAlert className="w-4 h-4" />
-              </div>
-            </div>
-            <div>
-              <div className="text-2xl font-black text-[#D92D20]">
-                {formatCurrency(analytics?.totalBlockedSpending || 0)}
-              </div>
-              <div className="text-[11px] text-red-600 font-medium mt-0.5 flex items-center gap-1">
-                <span>{analytics?.promptInjectionsBlocked || 0} prompt injections blocked</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 4: Pending Approvals */}
-          <div className="bg-white p-5 rounded-2xl border border-[#DCE5EF] shadow-subtle flex flex-col justify-between space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#5E738B]">Pending Human Review</span>
+              <span className="text-xs font-semibold text-[#5E738B]">Reserved In-Flight</span>
               <div className="w-8 h-8 rounded-lg bg-[#B46500]/10 flex items-center justify-center text-[#B46500]">
                 <Clock className="w-4 h-4" />
               </div>
             </div>
             <div>
               <div className="text-2xl font-black text-[#B46500]">
-                {pendingApprovals.length}
+                {formatCurrency(analytics?.reservedSpending || 0)}
               </div>
               <div className="text-[11px] text-gray-500 mt-0.5">
-                Exceptions requiring explicit sign-off
+                {pendingApprovals.length} pending review / in checkout
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Available Spending Capacity */}
+          <div className="bg-white p-5 rounded-2xl border border-[#DCE5EF] shadow-subtle flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#5E738B]">Available Capacity</span>
+              <div className="w-8 h-8 rounded-lg bg-[#0070E0]/10 flex items-center justify-center text-[#0070E0]">
+                <DollarSign className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl font-black text-[#0070E0]">
+                {formatCurrency(analytics?.availableSpending || (mandates[0] ? Math.max(0, mandates[0].totalBudget - mandates[0].spentAmount - mandates[0].reservedAmount) : 0))}
+              </div>
+              <div className="text-[11px] text-gray-500 mt-0.5">
+                Unallocated across {activeMandates.length} active mandate{activeMandates.length === 1 ? '' : 's'}
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Blocked Attempted Value (Policy Enforced, NOT "Money Saved") */}
+          <div className="bg-white p-5 rounded-2xl border border-[#DCE5EF] shadow-subtle flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#5E738B]">Blocked Attempted Value</span>
+              <div className="w-8 h-8 rounded-lg bg-[#D92D20]/10 flex items-center justify-center text-[#D92D20]">
+                <ShieldAlert className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl font-black text-[#D92D20]">
+                {formatCurrency(analytics?.blockedAttemptsValue ?? analytics?.totalBlockedSpending ?? 0)}
+              </div>
+              <div className="text-[11px] text-red-600 font-medium mt-0.5 flex items-center gap-1">
+                <span>{analytics?.promptInjectionsBlocked || 0} prompt injections blocked (not money saved)</span>
               </div>
             </div>
           </div>

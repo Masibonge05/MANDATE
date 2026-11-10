@@ -32,6 +32,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Mandate not found' }, { status: 404 });
     }
 
+    const authUserId = req.headers.get('x-user-id') || db.user.id;
+    if (existing.userId !== authUserId) {
+      return NextResponse.json({ error: 'Forbidden: Cannot modify another user tenant mandate' }, { status: 403 });
+    }
+
     // Status change
     if (body.status && ['active', 'paused', 'revoked'].includes(body.status)) {
       const updated = db.updateMandateStatus(id, body.status);

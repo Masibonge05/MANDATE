@@ -66,7 +66,7 @@ function LedgerContent() {
               Security & Audit Ledger
             </h1>
             <span className="text-xs bg-[#EBF3FC] text-[#003087] font-bold px-2 py-0.5 rounded-full border border-[#CDE1F8]">
-              AG Grid Enterprise View
+              AG Grid Community Edition
             </span>
           </div>
           <p className="text-xs text-[#5E738B] mt-1">

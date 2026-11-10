@@ -150,8 +150,43 @@ class DatabaseStore {
   }
 
   public saveMandate(mandate: Mandate): void {
+    const existing = this.mandates.get(mandate.id);
+    if (!existing) {
+      // First version
+      this.recordMandateVersion(mandate, 'Initial policy creation from natural language prompt');
+    } else if (
+      existing.totalBudget !== mandate.totalBudget ||
+      existing.maxTransactionAmount !== mandate.maxTransactionAmount ||
+      existing.approvalThreshold !== mandate.approvalThreshold ||
+      JSON.stringify(existing.approvedMerchants) !== JSON.stringify(mandate.approvedMerchants)
+    ) {
+      mandate.version = (existing.version || 1) + 1;
+      this.recordMandateVersion(
+        mandate,
+        `Spending boundaries updated (Budget: $${existing.totalBudget} -> $${mandate.totalBudget})`
+      );
+    }
     this.mandates.set(mandate.id, mandate);
     SupabaseBridge.persistMandate(mandate).catch(e => console.warn('[DB] Supabase mandate sync error:', e));
+  }
+
+  public getMandateVersions(mandateId: string): MandateVersion[] {
+    return this.mandateVersions
+      .filter(v => v.mandateId === mandateId)
+      .sort((a, b) => b.version - a.version);
+  }
+
+  public recordMandateVersion(mandate: Mandate, changesSummary: string): MandateVersion {
+    const versionRecord: MandateVersion = {
+      id: `mv-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      mandateId: mandate.id,
+      version: mandate.version || 1,
+      changesSummary,
+      snapshot: { ...mandate },
+      createdAt: new Date().toISOString(),
+    };
+    this.mandateVersions.unshift(versionRecord);
+    return versionRecord;
   }
 
   public updateMandateStatus(id: string, status: Mandate['status']): Mandate | null {
@@ -283,27 +318,46 @@ class DatabaseStore {
     let blockedCount = 0;
     let pendingApprovalCount = 0;
     let paidCount = 0;
-    let totalAuthorizedSpending = 0;
-    let totalBlockedSpending = 0;
+    let capturedSpendingCents = 0;
+    let blockedAttemptsValueCents = 0;
     let promptInjectionsBlocked = 0;
 
     for (const tx of txs) {
+      const amtCents = toCents(tx.amount);
       if (tx.status === 'PAID') {
         paidCount++;
-        totalAuthorizedSpending += tx.amount;
+        capturedSpendingCents += amtCents;
       } else if (tx.status === 'APPROVED') {
         approvedCount++;
-        totalAuthorizedSpending += tx.amount;
       } else if (tx.status === 'BLOCKED') {
         blockedCount++;
-        totalBlockedSpending += tx.amount;
-        if (tx.aiReview.prompt_injection_detected) {
+        blockedAttemptsValueCents += amtCents;
+        if (tx.aiReview?.prompt_injection_detected) {
           promptInjectionsBlocked++;
         }
       } else if (tx.status === 'REQUIRES_APPROVAL') {
         pendingApprovalCount++;
       }
     }
+
+    // Active Mandate Balances (strictly separate captured, reserved, and available without double-counting)
+    let totalBudgetCents = 0;
+    let spentBudgetCents = 0;
+    let reservedBudgetCents = 0;
+
+    for (const m of mandates) {
+      if (m.status === 'active') {
+        totalBudgetCents += toCents(m.totalBudget);
+        spentBudgetCents += toCents(m.spentAmount);
+        reservedBudgetCents += toCents(m.reservedAmount);
+      }
+    }
+
+    const availableBudgetCents = Math.max(0, totalBudgetCents - spentBudgetCents - reservedBudgetCents);
+    const capturedSpending = fromCents(capturedSpendingCents);
+    const reservedSpending = fromCents(reservedBudgetCents);
+    const availableSpending = fromCents(availableBudgetCents);
+    const blockedAttemptsValue = fromCents(blockedAttemptsValueCents);
 
     const totalEvaluated = txs.length;
     const approvalRate = totalEvaluated > 0 ? Math.round(((approvedCount + paidCount) / totalEvaluated) * 100) : 0;
@@ -315,8 +369,12 @@ class DatabaseStore {
       blockedCount,
       pendingApprovalCount,
       paidCount,
-      totalAuthorizedSpending: parseFloat(totalAuthorizedSpending.toFixed(2)),
-      totalBlockedSpending: parseFloat(totalBlockedSpending.toFixed(2)),
+      capturedSpending,
+      reservedSpending,
+      availableSpending,
+      blockedAttemptsValue,
+      totalAuthorizedSpending: capturedSpending, // Backwards compatible alias
+      totalBlockedSpending: blockedAttemptsValue, // Backwards compatible alias
       activeMandatesCount: mandates.filter(m => m.status === 'active').length,
       connectedAgentsCount: this.agents.size,
       promptInjectionsBlocked,
@@ -326,5 +384,11 @@ class DatabaseStore {
   }
 }
 
-export const db = DatabaseStore.getInstance();
+const globalForDb = globalThis as unknown as { mandateDbInstance: DatabaseStore };
+
+export const db = globalForDb.mandateDbInstance || DatabaseStore.getInstance();
+
+if (!globalForDb.mandateDbInstance) {
+  globalForDb.mandateDbInstance = db;
+}
 

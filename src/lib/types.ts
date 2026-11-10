@@ -213,8 +213,12 @@ export interface SystemAnalytics {
   blockedCount: number;
   pendingApprovalCount: number;
   paidCount: number;
-  totalAuthorizedSpending: number;
-  totalBlockedSpending: number;
+  capturedSpending: number; // strictly captured PAID transactions
+  reservedSpending: number; // active in-flight funds holding a reservation
+  availableSpending: number; // totalBudget - captured - reserved across active mandates
+  blockedAttemptsValue: number; // attempted monetary value of blocked transactions
+  totalAuthorizedSpending: number; // backwards compatibility alias for capturedSpending
+  totalBlockedSpending: number; // backwards compatibility alias for blockedAttemptsValue
   activeMandatesCount: number;
   connectedAgentsCount: number;
   promptInjectionsBlocked: number;
