@@ -214,7 +214,7 @@ export default function IntegrationsPage() {
             <div className="space-y-2 text-xs font-mono bg-[#F8FAFD] p-3.5 rounded-xl border border-[#EEF3F8]">
               <div className="flex justify-between items-center text-gray-600">
                 <span className="font-sans font-semibold">Project URL:</span>
-                <span className="text-[#003087]">rozgzdkemdcxyrlmofmc.supabase.co</span>
+                <span className="text-[#003087]">aws-0-eu-north-1.supabase.co</span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
                 <span className="font-sans font-semibold">Region:</span>
