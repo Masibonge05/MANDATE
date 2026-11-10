@@ -19,6 +19,8 @@ import {
   RefreshCw,
   ShoppingBag,
   CheckCircle2,
+  BarChart3,
+  Layers,
 } from 'lucide-react';
 import { PayPalLogo } from '@/components/common/PayPalLogo';
 import { MandateCompilerModal } from '@/components/mandates/MandateCompilerModal';
@@ -242,6 +244,113 @@ export default function DashboardPage() {
               No active mandates found. Create your first mandate to authorize AI agents.
             </div>
           )}
+        </div>
+
+        {/* Financial Intelligence & Operational Analytics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: Spending by Category */}
+          <div className="bg-white p-5 rounded-2xl border border-[#DCE5EF] shadow-subtle space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#EEF3F8]">
+              <span className="text-xs font-bold text-[#001C48] uppercase tracking-wider flex items-center gap-1.5">
+                <BarChart3 className="w-3.5 h-3.5 text-[#0070E0]" />
+                Spending by Category
+              </span>
+              <span className="text-[10px] text-gray-500 font-medium">Captured & Approved</span>
+            </div>
+            {analytics?.spendingByCategory && analytics.spendingByCategory.length > 0 ? (
+              <div className="space-y-2.5 pt-1">
+                {analytics.spendingByCategory.slice(0, 4).map((c, idx) => {
+                  const maxAmt = Math.max(...(analytics.spendingByCategory?.map(x => x.amount) || [1]), 1);
+                  const pct = Math.round((c.amount / maxAmt) * 100);
+                  return (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="font-medium text-gray-800 truncate">{c.category}</span>
+                        <span className="font-bold text-[#003087]">{formatCurrency(c.amount)}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-[#EEF3F8] rounded-full overflow-hidden">
+                        <div
+                          style={{ width: `${pct}%` }}
+                          className="h-full bg-[#0070E0] rounded-full transition-all duration-300"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-6 text-center text-gray-400 text-xs">No categorised spending recorded yet</div>
+            )}
+          </div>
+
+          {/* Card 2: Spending by Merchant */}
+          <div className="bg-white p-5 rounded-2xl border border-[#DCE5EF] shadow-subtle space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#EEF3F8]">
+              <span className="text-xs font-bold text-[#001C48] uppercase tracking-wider flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-[#0E8A44]" />
+                Top Approved Merchants
+              </span>
+              <span className="text-[10px] text-gray-500 font-medium">Whitelist Compliant</span>
+            </div>
+            {analytics?.spendingByMerchant && analytics.spendingByMerchant.length > 0 ? (
+              <div className="space-y-2.5 pt-1">
+                {analytics.spendingByMerchant.slice(0, 4).map((m, idx) => {
+                  const maxAmt = Math.max(...(analytics.spendingByMerchant?.map(x => x.amount) || [1]), 1);
+                  const pct = Math.round((m.amount / maxAmt) * 100);
+                  return (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="font-medium text-gray-800 truncate">{m.merchant}</span>
+                        <span className="font-bold text-[#0E8A44]">{formatCurrency(m.amount)}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-[#EEF3F8] rounded-full overflow-hidden">
+                        <div
+                          style={{ width: `${pct}%` }}
+                          className="h-full bg-[#0E8A44] rounded-full transition-all duration-300"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-6 text-center text-gray-400 text-xs">No merchant transactions recorded yet</div>
+            )}
+          </div>
+
+          {/* Card 3: Risk & Policy Distribution */}
+          <div className="bg-white p-5 rounded-2xl border border-[#DCE5EF] shadow-subtle space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#EEF3F8]">
+              <span className="text-xs font-bold text-[#001C48] uppercase tracking-wider flex items-center gap-1.5">
+                <ShieldAlert className="w-3.5 h-3.5 text-[#D92D20]" />
+                Risk & Policy Distribution
+              </span>
+              <span className="text-[10px] text-gray-500 font-medium">Gateway Telemetry</span>
+            </div>
+            <div className="space-y-2 pt-1 text-xs">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[#EBF8F0]">
+                <span className="font-semibold text-[#0E8A44] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#0E8A44]" />
+                  Low Risk (Compliant)
+                </span>
+                <span className="font-bold text-[#0E8A44]">{analytics?.riskDistribution?.low || 0}</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[#FEF7EB]">
+                <span className="font-semibold text-[#B46500] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#B46500]" />
+                  Medium Risk / Approval Triggered
+                </span>
+                <span className="font-bold text-[#B46500]">{analytics?.riskDistribution?.medium || 0}</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[#FEF3F2]">
+                <span className="font-semibold text-[#D92D20] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#D92D20]" />
+                  Adversarial Prompt Injections Blocked
+                </span>
+                <span className="font-bold text-[#D92D20]">{analytics?.promptInjectionsBlocked || 0}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Two Column Layout: Recent Gateway Activity & Pending Approvals */}

@@ -5,7 +5,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { ColDef, GridReadyEvent, RowClickedEvent } from 'ag-grid-community';
 import { Transaction } from '@/lib/types';
 import { formatCurrency, formatDate, getStatusBadgeStyle, getRiskBadgeStyle } from '@/lib/formatters';
-import { ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, Clock, Search } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, Clock, Search, Download } from 'lucide-react';
 import { TransactionDetailModal } from './TransactionDetailModal';
 
 interface SecurityLedgerGridProps {
@@ -17,6 +17,19 @@ export const SecurityLedgerGrid: React.FC<SecurityLedgerGridProps> = ({ transact
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [quickFilterText, setQuickFilterText] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [gridApi, setGridApi] = useState<any>(null);
+
+  const onGridReady = (params: GridReadyEvent) => {
+    setGridApi(params.api);
+  };
+
+  const exportToCsv = () => {
+    if (gridApi) {
+      gridApi.exportDataAsCsv({
+        fileName: `mandate-security-ledger-${new Date().toISOString().slice(0, 10)}.csv`,
+      });
+    }
+  };
 
   // Custom Cell Renderers for AG Grid
   const statusCellRenderer = (params: any) => {
@@ -256,6 +269,16 @@ export const SecurityLedgerGrid: React.FC<SecurityLedgerGridProps> = ({ transact
               </button>
             );
           })}
+
+          {/* Export CSV Button */}
+          <button
+            onClick={exportToCsv}
+            title="Export filtered security ledger records to CSV"
+            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white border border-[#DCE5EF] text-[#142B4A] hover:bg-[#F5F8FC] hover:border-[#0070E0] transition flex items-center gap-1 shadow-2xs"
+          >
+            <Download className="w-3.5 h-3.5 text-[#0070E0]" />
+            <span>Export CSV</span>
+          </button>
         </div>
       </div>
 
@@ -271,9 +294,23 @@ export const SecurityLedgerGrid: React.FC<SecurityLedgerGridProps> = ({ transact
             paginationPageSizeSelector={[12, 25, 50]}
             quickFilterText={quickFilterText}
             onRowClicked={onRowClicked}
+            onGridReady={onGridReady}
             rowSelection="single"
             animateRows={true}
           />
+        </div>
+
+        {/* Security Ledger Summary Footer */}
+        <div className="px-4 py-2.5 bg-[#F8FAFD] border-t border-[#EEF3F8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-3">
+            <span>Showing <strong className="text-gray-900 font-bold">{rowData.length}</strong> of <strong className="text-gray-900 font-bold">{transactions.length}</strong> ledger records</span>
+            <span>•</span>
+            <span>Total Evaluated Value: <strong className="text-[#003087] font-bold">{formatCurrency(rowData.reduce((acc, t) => acc + (t.amount || 0), 0))}</strong></span>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] text-[#5E738B]">
+            <span className="w-2 h-2 rounded-full bg-[#0E8A44]" />
+            <span>AG Grid Community Edition • Client-Side Filter & Sort Active</span>
+          </div>
         </div>
       </div>
 

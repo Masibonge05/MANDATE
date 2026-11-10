@@ -224,5 +224,10 @@ export interface SystemAnalytics {
   promptInjectionsBlocked: number;
   approvalRate: number; // percentage
   blockRate: number; // percentage
+  spendingByCategory?: { category: string; amount: number; count: number }[];
+  spendingByMerchant?: { merchant: string; amount: number; count: number }[];
+  riskDistribution?: { low: number; medium: number; high: number; promptInjections: number };
+  policyViolations?: { budgetExceeded: number; unauthorizedMerchant: number; categoryApproval: number; promptInjection: number };
+  budgetUtilisationRate?: number; // percentage of active budget captured
 }
 

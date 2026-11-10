@@ -1,0 +1,385 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MANDATE Financial Security Gateway API",
+    "description": "Autonomous purchasing agent financial authorisation, policy enforcement, and PayPal payment execution gateway. Designed for seamless APIMatic SDK generation across Python, TypeScript, Java, C#, and Go.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "MANDATE Engineering (PayPal AI Hackathon 2026)",
+      "url": "https://github.com/Masibonge05/mandate"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local Development Server"
+    },
+    {
+      "url": "https://mandate-fintech.onrender.com",
+      "description": "Render Production Web Service"
+    }
+  ],
+  "tags": [
+    { "name": "Gateway", "description": "Core autonomous agent financial evaluation & proposal execution" },
+    { "name": "Mandates", "description": "Financial authority boundary definitions and version snapshots" },
+    { "name": "PayPal", "description": "PayPal REST Orders v2 capture, cancellation, and webhook ingress" },
+    { "name": "Security Ledger", "description": "Immutable financial audit records and investigation queries" },
+    { "name": "Approvals", "description": "Human-in-the-loop exception review and authorization" },
+    { "name": "Analytics", "description": "Financial intelligence, budget utilisation, and risk telemetry" }
+  ],
+  "paths": {
+    "/api/gateway/transactions/propose": {
+      "post": {
+        "tags": ["Gateway"],
+        "summary": "Propose an autonomous agent transaction",
+        "description": "The primary entrypoint for purchasing agents. Evaluates proposed transactions against active mandates using zero-trust integer arithmetic and an independent LLM risk reviewer. Generates a PayPal Sandbox order only when fully compliant.",
+        "operationId": "proposeTransaction",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionProposalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction evaluated and decided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionProposalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields or invalid amount"
+          },
+          "404": {
+            "description": "Specified mandate not found or inactive"
+          }
+        }
+      }
+    },
+    "/api/mandates": {
+      "get": {
+        "tags": ["Mandates"],
+        "summary": "List financial mandates",
+        "description": "Returns all spending mandates for the authenticated tenant.",
+        "operationId": "listMandates",
+        "responses": {
+          "200": {
+            "description": "List of user mandates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mandates": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Mandate" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Mandates"],
+        "summary": "Create a new financial mandate",
+        "operationId": "createMandate",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateMandateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mandate created successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Mandate" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mandates/compile": {
+      "post": {
+        "tags": ["Mandates"],
+        "summary": "Compile natural language prompt into structured mandate",
+        "description": "Uses Google Gemini Flash to extract budget limits, merchant whitelists, categories, and approval thresholds from unstructured natural language instructions.",
+        "operationId": "compileMandatePrompt",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["prompt"],
+                "properties": {
+                  "prompt": { "type": "string", "example": "Spend up to $100 on camera accessories for my sister. Only buy from Apex Optics or B&H. Require approval for anything over $75." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Compiled structured mandate parameters",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CompiledMandateResult" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mandates/simulate": {
+      "post": {
+        "tags": ["Mandates"],
+        "summary": "Simulate transaction against mandate policy",
+        "description": "Dry-run simulation mode. Runs identical deterministic policy checks without altering stored budgets, creating database records, or calling PayPal.",
+        "operationId": "simulateTransaction",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["mandateId", "amount", "merchant"],
+                "properties": {
+                  "mandateId": { "type": "string" },
+                  "amount": { "type": "number", "example": 45.00 },
+                  "merchant": { "type": "string", "example": "Apex Optics" },
+                  "category": { "type": "string", "example": "Photography Accessories" },
+                  "productTitle": { "type": "string", "example": "UV Lens Filter Kit" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Simulation evaluation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "simulatedDecision": { "type": "string", "enum": ["APPROVED", "BLOCKED", "REQUIRES_APPROVAL"] },
+                    "policyEvaluation": { "type": "object" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/paypal/capture-order": {
+      "post": {
+        "tags": ["PayPal"],
+        "summary": "Capture and verify approved PayPal Sandbox order",
+        "description": "Verifies PayPal buyer sign-off and executes server-side capture via REST Orders API v2. Only transitions transaction to PAID when status is confirmed COMPLETED.",
+        "operationId": "capturePayPalOrder",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["orderId"],
+                "properties": {
+                  "orderId": { "type": "string", "example": "8JM52078C7971032U" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order successfully captured and payment completed"
+          },
+          "422": {
+            "description": "Order not approved by buyer on PayPal Sandbox"
+          },
+          "409": {
+            "description": "Order already captured or in terminal state"
+          }
+        }
+      }
+    },
+    "/api/paypal/cancel-order": {
+      "get": {
+        "tags": ["PayPal"],
+        "summary": "Handle buyer checkout cancellation",
+        "description": "Callback endpoint when buyer clicks Cancel on PayPal Sandbox. Releases reserved budget atomically and marks transaction CANCELLED.",
+        "operationId": "cancelPayPalOrder",
+        "parameters": [
+          { "name": "token", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects to security ledger with cancelled status banner"
+          }
+        }
+      }
+    },
+    "/api/webhooks/paypal": {
+      "post": {
+        "tags": ["PayPal"],
+        "summary": "PayPal Webhook Event Receiver",
+        "description": "Ingests asynchronous PayPal Sandbox events (PAYMENT.CAPTURE.COMPLETED, PAYMENT.CAPTURE.DENIED, CHECKOUT.ORDER.APPROVED). Verifies cryptographic signatures via PayPal's REST API.",
+        "operationId": "handlePayPalWebhook",
+        "responses": {
+          "200": {
+            "description": "Webhook received, verified, and processed idempotently"
+          },
+          "401": {
+            "description": "Invalid PayPal webhook signature"
+          }
+        }
+      }
+    },
+    "/api/analytics": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Get system financial intelligence & risk telemetry",
+        "description": "Returns captured spending, reserved in-flight funds, available capacity, category breakdowns, merchant distributions, and adversarial prompt injection metrics.",
+        "operationId": "getAnalytics",
+        "responses": {
+          "200": {
+            "description": "Financial analytics summary",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SystemAnalytics" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TransactionProposalRequest": {
+        "type": "object",
+        "required": ["agentId", "mandateId", "amount", "product"],
+        "properties": {
+          "agentId": { "type": "string", "example": "agt-shopping-01" },
+          "mandateId": { "type": "string", "example": "man-photo-001" },
+          "amount": { "type": "number", "example": 45.00 },
+          "currency": { "type": "string", "enum": ["USD", "EUR", "GBP"], "default": "USD" },
+          "product": {
+            "type": "object",
+            "required": ["title", "price", "merchant"],
+            "properties": {
+              "id": { "type": "string", "example": "prod-photo-001" },
+              "title": { "type": "string", "example": "Pro Photo Multi-Coated UV Filter Kit (67mm)" },
+              "description": { "type": "string", "example": "Optical glass filter kit with aluminium frame." },
+              "price": { "type": "number", "example": 45.00 },
+              "merchant": { "type": "string", "example": "Apex Optics" },
+              "category": { "type": "string", "example": "Photography Accessories" }
+            }
+          },
+          "userPrompt": { "type": "string", "example": "Find a good camera gift for my sister under $100" },
+          "idempotencyKey": { "type": "string", "example": "idemp-9a8b7c6d5e" }
+        }
+      },
+      "TransactionProposalResponse": {
+        "type": "object",
+        "properties": {
+          "transaction": { "$ref": "#/components/schemas/Transaction" },
+          "combinedDecision": { "type": "string", "enum": ["APPROVED", "BLOCKED", "REQUIRES_APPROVAL"] },
+          "paypalApprovalUrl": { "type": "string", "nullable": true, "example": "https://www.sandbox.paypal.com/checkoutnow?token=8JM52078C7971032U" },
+          "decisionReason": { "type": "string" }
+        }
+      },
+      "Mandate": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "totalBudget": { "type": "number" },
+          "spentAmount": { "type": "number" },
+          "reservedAmount": { "type": "number" },
+          "currency": { "type": "string" },
+          "approvedMerchants": { "type": "array", "items": { "type": "string" } },
+          "allowedCategories": { "type": "array", "items": { "type": "string" } },
+          "approvalThreshold": { "type": "number" },
+          "status": { "type": "string", "enum": ["active", "paused", "revoked", "draft"] }
+        }
+      },
+      "CreateMandateRequest": {
+        "type": "object",
+        "required": ["name", "totalBudget", "currency"],
+        "properties": {
+          "name": { "type": "string", "example": "Sister Photography Gift" },
+          "description": { "type": "string", "example": "Authorized procurement for photography equipment" },
+          "totalBudget": { "type": "number", "example": 100.00 },
+          "currency": { "type": "string", "default": "USD" },
+          "approvedMerchants": { "type": "array", "items": { "type": "string" } },
+          "approvalThreshold": { "type": "number", "example": 75.00 }
+        }
+      },
+      "CompiledMandateResult": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "totalBudget": { "type": "number" },
+          "maxTransactionAmount": { "type": "number" },
+          "approvalThreshold": { "type": "number" },
+          "currency": { "type": "string" },
+          "approvedMerchants": { "type": "array", "items": { "type": "string" } },
+          "approvalRequiredCategories": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "mandateId": { "type": "string" },
+          "amount": { "type": "number" },
+          "currency": { "type": "string" },
+          "status": { "type": "string", "enum": ["PENDING", "APPROVED", "BLOCKED", "REQUIRES_APPROVAL", "PAID", "CANCELLED", "PAYMENT_FAILED"] },
+          "paypalOrderId": { "type": "string", "nullable": true },
+          "paypalApprovalUrl": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SystemAnalytics": {
+        "type": "object",
+        "properties": {
+          "totalProposals": { "type": "integer" },
+          "capturedSpending": { "type": "number" },
+          "reservedSpending": { "type": "number" },
+          "availableSpending": { "type": "number" },
+          "blockedAttemptsValue": { "type": "number" },
+          "promptInjectionsBlocked": { "type": "integer" },
+          "approvalRate": { "type": "integer" },
+          "blockRate": { "type": "integer" },
+          "budgetUtilisationRate": { "type": "integer" }
+        }
+      }
+    }
+  }
+}

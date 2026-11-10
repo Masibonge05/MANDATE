@@ -371,6 +371,70 @@ class DatabaseStore {
     const approvalRate = totalEvaluated > 0 ? Math.round(((approvedCount + paidCount) / totalEvaluated) * 100) : 0;
     const blockRate = totalEvaluated > 0 ? Math.round((blockedCount / totalEvaluated) * 100) : 0;
 
+    // Financial Intelligence Breakdowns (real transactional data)
+    const categoryMap = new Map<string, { cents: number; count: number }>();
+    const merchantMap = new Map<string, { cents: number; count: number }>();
+    let riskLow = 0;
+    let riskMedium = 0;
+    let riskHigh = 0;
+    let violBudget = 0;
+    let violMerchant = 0;
+    let violCategory = 0;
+    let violInjection = 0;
+
+    for (const tx of txs) {
+      const amtCents = toCents(tx.amount);
+      const cat = tx.product?.category || 'Photography Accessories';
+      const merch = tx.product?.merchant || 'Apex Optics';
+
+      if (tx.status === 'PAID' || tx.status === 'APPROVED') {
+        const catEntry = categoryMap.get(cat) || { cents: 0, count: 0 };
+        catEntry.cents += amtCents;
+        catEntry.count++;
+        categoryMap.set(cat, catEntry);
+
+        const merchEntry = merchantMap.get(merch) || { cents: 0, count: 0 };
+        merchEntry.cents += amtCents;
+        merchEntry.count++;
+        merchantMap.set(merch, merchEntry);
+      }
+
+      const risk = tx.aiReview?.risk_level;
+      if (risk === 'LOW') riskLow++;
+      else if (risk === 'MEDIUM') riskMedium++;
+      else if (risk === 'HIGH') riskHigh++;
+
+      if (tx.status === 'BLOCKED') {
+        const reason = (tx.policyEvaluation?.detailedChecks || []).find(r => !r.passed)?.ruleName || (tx.policyEvaluation?.reasonCodes || []).join(' ');
+        if (reason.toLowerCase().includes('merchant') || reason.toLowerCase().includes('whitelist')) {
+          violMerchant++;
+        } else {
+          violBudget++;
+        }
+        if (tx.aiReview?.prompt_injection_detected) {
+          violInjection++;
+        }
+      } else if (tx.status === 'REQUIRES_APPROVAL') {
+        violCategory++;
+      }
+    }
+
+    const spendingByCategory = Array.from(categoryMap.entries()).map(([category, val]) => ({
+      category,
+      amount: fromCents(val.cents),
+      count: val.count,
+    })).sort((a, b) => b.amount - a.amount);
+
+    const spendingByMerchant = Array.from(merchantMap.entries()).map(([merchant, val]) => ({
+      merchant,
+      amount: fromCents(val.cents),
+      count: val.count,
+    })).sort((a, b) => b.amount - a.amount);
+
+    const budgetUtilisationRate = totalBudgetCents > 0
+      ? Math.round((spentBudgetCents / totalBudgetCents) * 100)
+      : 0;
+
     return {
       totalProposals: totalEvaluated,
       approvedCount,
@@ -388,6 +452,11 @@ class DatabaseStore {
       promptInjectionsBlocked,
       approvalRate,
       blockRate,
+      spendingByCategory,
+      spendingByMerchant,
+      riskDistribution: { low: riskLow, medium: riskMedium, high: riskHigh, promptInjections: violInjection },
+      policyViolations: { budgetExceeded: violBudget, unauthorizedMerchant: violMerchant, categoryApproval: violCategory, promptInjection: violInjection },
+      budgetUtilisationRate,
     };
   }
 }
