@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { CompiledMandateData } from '@/lib/mandate-compiler';
-import { Sparkles, X, Check, Shield, AlertTriangle, ArrowRight, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Sparkles, X, Check, Shield, AlertTriangle, ArrowRight, ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
 
 interface MandateCompilerModalProps {
   onClose: () => void;
@@ -138,9 +138,10 @@ export const MandateCompilerModal: React.FC<MandateCompilerModalProps> = ({
                     <button
                       key={idx}
                       onClick={() => setPromptText(p.text)}
-                      className="text-left p-2 rounded-lg border border-[#EEF3F8] hover:border-[#0070E0] hover:bg-[#F5F8FC] transition text-[11px] text-gray-700 font-medium"
+                      className="text-left p-2.5 rounded-lg border border-[#EEF3F8] hover:border-[#0070E0] hover:bg-[#F5F8FC] transition text-[11px] text-[#142B4A] font-medium flex items-center gap-2"
                     >
-                      💡 {p.label}
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0070E0] flex-shrink-0" />
+                      <span>{p.label}</span>
                     </button>
                   ))}
                 </div>
@@ -241,8 +242,9 @@ export const MandateCompilerModal: React.FC<MandateCompilerModalProps> = ({
                 <div className="flex flex-wrap gap-1.5 p-2 bg-[#FEF7EB] border border-[#F8D8A3] rounded-lg text-[#B46500]">
                   {compiledData.approvalRequiredCategories.length > 0 ? (
                     compiledData.approvalRequiredCategories.map((c, i) => (
-                      <span key={i} className="px-2 py-0.5 bg-white border border-[#F8D8A3] rounded text-[11px] font-bold">
-                        ⚠️ {c}
+                      <span key={i} className="px-2 py-0.5 bg-white border border-[#F8D8A3] rounded text-[11px] font-bold flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 text-[#B46500]" />
+                        <span>{c}</span>
                       </span>
                     ))
                   ) : (
@@ -254,9 +256,10 @@ export const MandateCompilerModal: React.FC<MandateCompilerModalProps> = ({
               <div className="pt-2 flex items-center justify-between border-t border-[#EEF3F8]">
                 <button
                   onClick={() => setStep('prompt')}
-                  className="px-3 py-1.5 text-gray-600 hover:text-gray-900 font-medium"
+                  className="px-3 py-1.5 text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1.5 text-xs"
                 >
-                  ← Edit Instruction
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Edit Instruction</span>
                 </button>
 
                 <button

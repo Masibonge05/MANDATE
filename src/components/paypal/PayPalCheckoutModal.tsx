@@ -61,14 +61,16 @@ export const PayPalCheckoutModal: React.FC<PayPalCheckoutModalProps> = ({
       <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-[#DCE5EF] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header with Official PayPal Branding */}
         <div className="bg-[#003087] px-6 py-4 flex items-center justify-between text-white">
-          <div className="flex items-center gap-2">
-            <PayPalLogo variant="full" height={22} className="brightness-0 invert" />
-            <span className="text-[11px] font-bold bg-white/20 text-white px-2 py-0.5 rounded tracking-wider uppercase ml-1">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-white px-2.5 py-1 rounded-lg flex items-center shadow-xs">
+              <PayPalLogo variant="full" height={18} />
+            </div>
+            <span className="text-[11px] font-bold bg-white/20 text-white px-2 py-0.5 rounded tracking-wider uppercase">
               Sandbox
             </span>
           </div>
           {step !== 'capturing' && (
-            <button onClick={onClose} className="text-white/70 hover:text-white transition">
+            <button onClick={onClose} className="text-white/70 hover:text-white transition p-1 rounded-lg hover:bg-white/10" aria-label="Close dialog">
               <X className="w-5 h-5" />
             </button>
           )}

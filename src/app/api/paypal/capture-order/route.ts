@@ -85,7 +85,7 @@ export async function POST(req: Request) {
       }, { status: 402 });
     }
 
-    // Capture is confirmed COMPLETED — commit financial budget atomically
+    // Capture is confirmed COMPLETED - commit financial budget atomically
     db.commitReservedPayment(tx.mandateId, tx.amount);
 
     const now = new Date().toISOString();

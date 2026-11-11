@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, ShieldAlert, UserCheck, RefreshCw, Sparkles, CheckCircle2, FlaskConical, AlertCircle } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, UserCheck, RefreshCw, Sparkles, CheckCircle2, FlaskConical, AlertCircle, X } from 'lucide-react';
 
 interface DemoScenarioBarProps {
   onScenarioExecuted?: (scenarioKey: string) => void;
@@ -213,7 +213,7 @@ export const DemoScenarioBar: React.FC<DemoScenarioBarProps> = ({ onScenarioExec
             <CheckCircle2 className="w-3.5 h-3.5 text-[#009CDE]" />
             <span>{successBanner}</span>
           </div>
-          <button onClick={() => setSuccessBanner(null)} className="text-gray-400 hover:text-white">✕</button>
+          <button onClick={() => setSuccessBanner(null)} className="text-gray-400 hover:text-white" aria-label="Close notification"><X className="w-3.5 h-3.5" /></button>
         </div>
       )}
 
@@ -223,7 +223,7 @@ export const DemoScenarioBar: React.FC<DemoScenarioBarProps> = ({ onScenarioExec
             <AlertCircle className="w-3.5 h-3.5 text-[#D92D20]" />
             <span>{errorBanner}</span>
           </div>
-          <button onClick={() => setErrorBanner(null)} className="text-gray-400 hover:text-white">✕</button>
+          <button onClick={() => setErrorBanner(null)} className="text-gray-400 hover:text-white" aria-label="Close notification"><X className="w-3.5 h-3.5" /></button>
         </div>
       )}
     </div>

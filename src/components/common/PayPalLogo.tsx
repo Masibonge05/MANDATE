@@ -1,16 +1,36 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface PayPalLogoProps {
   className?: string;
-  variant?: 'full' | 'monogram';
+  variant?: 'full' | 'monogram' | 'image' | 'stacked';
   height?: number;
 }
 
+/**
+ * Official PayPal brand logo component.
+ * Supports horizontal vector glyphs, monogram, and high-definition raster assets.
+ */
 export const PayPalLogo: React.FC<PayPalLogoProps> = ({
   className = '',
   variant = 'full',
   height = 24,
 }) => {
+  if (variant === 'image' || variant === 'stacked') {
+    return (
+      <div className={`inline-flex items-center justify-center ${className}`}>
+        <Image
+          src="/images/paypal-logo.png"
+          alt="PayPal"
+          width={height}
+          height={height}
+          priority
+          className="object-contain"
+        />
+      </div>
+    );
+  }
+
   if (variant === 'monogram') {
     return (
       <svg
@@ -19,7 +39,7 @@ export const PayPalLogo: React.FC<PayPalLogoProps> = ({
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className={className}
-        aria-label="PayPal"
+        aria-label="PayPal Monogram"
       >
         <path
           d="M28.5 110L42.8 19.3H72.4C87.4 19.3 97.4 28.5 94.8 45.4C90.7 71.9 74.4 83.7 54.3 83.7H38.2L34.1 110H28.5Z"
@@ -45,7 +65,7 @@ export const PayPalLogo: React.FC<PayPalLogoProps> = ({
         viewBox="0 0 320 85"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        aria-label="PayPal Official Logo"
+        aria-label="PayPal Logo"
       >
         {/* Official PayPal Monogram */}
         <g transform="translate(0, 0) scale(0.65)">
@@ -63,7 +83,7 @@ export const PayPalLogo: React.FC<PayPalLogoProps> = ({
             fillOpacity="0.4"
           />
         </g>
-        {/* Official PayPal Text Glyphs */}
+        {/* Official PayPal Wordmark */}
         <text
           x="82"
           y="56"

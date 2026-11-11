@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { MandateLogo } from '@/components/common/MandateLogo';
 import { PayPalLogo } from '@/components/common/PayPalLogo';
-import { ShieldCheck, ArrowRight, Lock, Mail, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, ArrowRight, ArrowLeft, Lock, Mail, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -117,7 +117,10 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center text-xs text-gray-500">
-          <Link href="/" className="hover:text-[#003087]">← Return to Public Home</Link>
+          <Link href="/" className="hover:text-[#003087] inline-flex items-center gap-1 font-medium transition">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Return to Public Home</span>
+          </Link>
         </div>
       </div>
     </div>

@@ -336,8 +336,10 @@ export default function LandingPage() {
       <section id="paypal-integration" className="py-16 bg-[#001C48] text-white">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <PayPalLogo variant="full" height={24} className="brightness-0 invert" />
+            <div className="flex items-center gap-3">
+              <div className="bg-white px-3 py-1.5 rounded-lg inline-flex items-center shadow-xs">
+                <PayPalLogo variant="full" height={22} />
+              </div>
               <span className="text-xs font-bold text-[#009CDE] uppercase tracking-wider">Official Integration</span>
             </div>
             <h2 className="text-3xl font-extrabold tracking-tight">
