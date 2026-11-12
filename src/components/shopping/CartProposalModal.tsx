@@ -78,7 +78,7 @@ export const CartProposalModal: React.FC<CartProposalModalProps> = ({
   const [agentReasoning, setAgentReasoning] = useState<string>(
     product.flaggedRisk
       ? 'Adversarial prompt injection detected in this listing — submitting to MANDATE to demonstrate security enforcement.'
-      : `Agent selected "${product.title}" based on photography gift intent. Verified merchant alignment and price within mandate budget parameters.`
+      : `Agent selected "${product.title}" from the catalog. MANDATE will independently verify the merchant, category, price, and risk before payment.`
   );
   const [evaluating, setEvaluating] = useState(false);
   const [result, setResult] = useState<any>(null);

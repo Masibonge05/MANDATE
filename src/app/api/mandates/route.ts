@@ -18,7 +18,27 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const validated = CompiledMandateSchema.parse(body);
+
+    // Normalize snake_case or shorthand inputs (such as Postman test payloads)
+    const normalized = {
+      name: body.name || body.title || 'AI Agent Financial Mandate',
+      description: body.description || body.rawPrompt || 'Automated purchasing policy for autonomous agent',
+      currency: body.currency || 'USD',
+      totalBudget: body.totalBudget ?? body.budget_limit ?? 500,
+      maxTransactionAmount: body.maxTransactionAmount ?? body.single_transaction_limit ?? body.budget_limit ?? 150,
+      maxQuantityPerPurchase: body.maxQuantityPerPurchase ?? body.max_quantity ?? 1,
+      allowedCategories: body.allowedCategories ?? body.allowed_categories ?? [],
+      restrictedCategories: body.restrictedCategories ?? body.category_restrictions ?? [],
+      approvedMerchants: body.approvedMerchants ?? body.approved_merchants ?? [],
+      blockedMerchants: body.blockedMerchants ?? body.blocked_merchants ?? [],
+      allowUnknownMerchants: body.allowUnknownMerchants ?? body.allow_unknown_merchants ?? false,
+      requiresHumanApproval: body.requiresHumanApproval ?? (body.requires_approval_above !== undefined ? true : false),
+      approvalThreshold: body.approvalThreshold ?? body.requires_approval_above ?? 0,
+      approvalRequiredCategories: body.approvalRequiredCategories ?? body.approval_required_categories ?? [],
+      expiryDays: body.expiryDays ?? body.expiry_days ?? 30,
+    };
+
+    const validated = CompiledMandateSchema.parse(normalized);
 
     const now = new Date();
     const expiry = new Date(now.getTime() + (validated.expiryDays || 30) * 24 * 60 * 60 * 1000);
@@ -62,7 +82,16 @@ export async function POST(req: Request) {
       metadata: { mandateId: newMandate.id, budget: newMandate.totalBudget },
     });
 
-    return NextResponse.json({ success: true, mandate: newMandate }, { status: 201 });
+    // Return both top-level fields (for Postman tests) and nested mandate (for UI)
+    return NextResponse.json({
+      ...newMandate,
+      id: newMandate.id,
+      budget_limit: newMandate.totalBudget,
+      active: newMandate.status === 'active',
+      success: true,
+      mandate: newMandate,
+    }, { status: 201 });
+
   } catch (error: any) {
     console.error('[API Mandate Create Error]:', error);
     return NextResponse.json(
@@ -71,4 +100,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

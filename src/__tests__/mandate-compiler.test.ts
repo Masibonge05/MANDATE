@@ -1,8 +1,18 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { compileNaturalLanguageMandate } from '../lib/mandate-compiler.ts';
+import { CompiledMandateSchema, compileNaturalLanguageMandate } from '../lib/mandate-compiler.ts';
 
 describe('MANDATE Natural Language Compiler', () => {
+  it('defaults an omitted single-transaction limit to the total budget', () => {
+    const compiled = CompiledMandateSchema.parse({
+      name: 'Office Supplies Mandate',
+      description: 'Restock office supplies for the business.',
+      totalBudget: 100,
+    });
+
+    assert.equal(compiled.maxTransactionAmount, 100);
+  });
+
   it('parses sister photography gift prompt with $100 budget and approval rules', async () => {
     const prompt = 'Find a birthday gift for my sister. She likes photography. You may spend a maximum of $100. Only purchase from approved merchants. Electronics require my approval.';
     const compiled = await compileNaturalLanguageMandate(prompt, 'USD');

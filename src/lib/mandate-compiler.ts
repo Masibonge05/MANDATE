@@ -1,18 +1,19 @@
 /**
  * MANDATE - Natural Language Mandate Compiler
  * Compiles informal user intent into rigorous, enforceable financial spending policies.
- * Uses Gemini 2.5 Flash with strict Zod schema validation and a deterministic fallback compiler.
+ * Uses Gemini with strict Zod schema validation and a deterministic fallback compiler.
  */
 
 import { z } from 'zod';
 import type { Mandate, Currency } from './types.ts';
+import { generateGeminiJsonContent } from './gemini-client.ts';
 
 export const CompiledMandateSchema = z.object({
   name: z.string().min(2).max(100),
   description: z.string().min(5).max(500),
   currency: z.enum(['USD', 'EUR', 'GBP', 'CAD']).default('USD'),
   totalBudget: z.number().positive(),
-  maxTransactionAmount: z.number().positive(),
+  maxTransactionAmount: z.number().positive().optional(),
   maxQuantityPerPurchase: z.number().int().positive().default(1),
   allowedCategories: z.array(z.string()).default([]),
   restrictedCategories: z.array(z.string()).default([]),
@@ -23,7 +24,10 @@ export const CompiledMandateSchema = z.object({
   approvalThreshold: z.number().nonnegative().default(0),
   approvalRequiredCategories: z.array(z.string()).default([]),
   expiryDays: z.number().int().positive().default(30),
-});
+}).transform(({ maxTransactionAmount, ...mandate }) => ({
+  ...mandate,
+  maxTransactionAmount: maxTransactionAmount ?? mandate.totalBudget,
+}));
 
 export type CompiledMandateData = z.infer<typeof CompiledMandateSchema>;
 
@@ -31,9 +35,7 @@ export async function compileNaturalLanguageMandate(
   promptText: string,
   userCurrency: Currency = 'USD'
 ): Promise<CompiledMandateData> {
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  if (apiKey) {
+  try {
     const systemPrompt = `You are the MANDATE Policy Compiler.
 Convert this natural-language financial instruction into a structured financial mandate.
 
@@ -46,36 +48,15 @@ STRICT INSTRUCTIONS:
 6. Check for conditional approvals: e.g. "Electronics require my approval" -> add "electronics" to approvalRequiredCategories.
 7. Return STRICT JSON matching the schema with no conversational fluff.`;
 
-    const candidateModels = [process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
-    for (const modelName of candidateModels) {
-      try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: `${systemPrompt}\n\nUSER PROMPT:\n"${promptText}"\nCURRENCY: ${userCurrency}` }]
-            }],
-            generationConfig: {
-              responseMimeType: 'application/json',
-              temperature: 0.1,
-            }
-          }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (jsonText) {
-            const rawParsed = JSON.parse(jsonText);
-            return CompiledMandateSchema.parse(rawParsed);
-          }
-        }
-      } catch (err) {
-        console.warn(`[Mandate Compiler] Model ${modelName} encountered issue, trying fallback:`, err);
-      }
+    const response = await generateGeminiJsonContent(
+      `${systemPrompt}\n\nUSER PROMPT:\n"${promptText}"\nCURRENCY: ${userCurrency}`,
+    );
+    if (response) {
+      const rawParsed = JSON.parse(response.text);
+      return CompiledMandateSchema.parse(rawParsed);
     }
+  } catch (err) {
+    console.warn('[Mandate Compiler] Gemini unavailable; using local compiler:', err);
   }
 
   // Deterministic NLP Rule-based Fallback Compiler

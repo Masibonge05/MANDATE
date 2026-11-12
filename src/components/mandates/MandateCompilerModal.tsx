@@ -165,7 +165,7 @@ export const MandateCompilerModal: React.FC<MandateCompilerModalProps> = ({
             <div className="py-12 text-center space-y-3">
               <Loader2 className="w-10 h-10 text-[#0070E0] animate-spin mx-auto" />
               <h4 className="font-bold text-sm text-[#001C48]">
-                Compiling Policy with Gemini 2.5 Flash...
+                Compiling mandate rules with Gemini AI...
               </h4>
               <p className="text-gray-500 text-xs">
                 Extracting budgets, merchant whitelists, category constraints, and approval rules into strict schema.

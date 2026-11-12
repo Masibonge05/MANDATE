@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { Transaction } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/formatters';
@@ -26,15 +26,48 @@ export default function ApprovalsPage() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedTxForCheckout, setSelectedTxForCheckout] = useState<Transaction | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const demoToken = useRef<string | null>(null);
+
+  const getDemoToken = async () => {
+    if (demoToken.current) return demoToken.current;
+
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const payload: unknown = await response.json();
+    if (
+      !response.ok ||
+      typeof payload !== 'object' ||
+      payload === null ||
+      !('access_token' in payload) ||
+      typeof payload.access_token !== 'string'
+    ) {
+      throw new Error('Could not establish a demo session for approvals');
+    }
+
+    const token = payload.access_token;
+    demoToken.current = token;
+    return token;
+  };
 
   const fetchApprovals = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/transactions?status=REQUIRES_APPROVAL');
-      const data = await res.json();
-      if (data.transactions) setTransactions(data.transactions);
+      const token = await getDemoToken();
+      const res = await fetch('/api/transactions?status=REQUIRES_APPROVAL', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data: { transactions?: Transaction[]; error?: string } = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load pending approvals');
+      if (!Array.isArray(data.transactions)) throw new Error('Approval response was invalid');
+      setTransactions(data.transactions);
+      setLoadError(null);
     } catch (err) {
       console.error(err);
+      setLoadError(err instanceof Error ? err.message : 'Failed to load pending approvals');
     } finally {
       setLoading(false);
     }
@@ -47,9 +80,13 @@ export default function ApprovalsPage() {
   const handleAction = async (txId: string, action: 'APPROVE' | 'REJECT') => {
     try {
       setProcessingId(txId);
+      const token = await getDemoToken();
       const res = await fetch(`/api/approvals/${txId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ action }),
       });
 
@@ -62,7 +99,7 @@ export default function ApprovalsPage() {
         setSelectedTxForCheckout(data.transaction);
       }
 
-      fetchApprovals();
+      await fetchApprovals();
     } catch (err: any) {
       alert(`Action error: ${err.message}`);
     } finally {
@@ -104,7 +141,15 @@ export default function ApprovalsPage() {
         </div>
 
         {/* Pending Requests List */}
-        {transactions.length > 0 ? (
+        {loadError ? (
+          <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {loadError}
+          </div>
+        ) : loading ? (
+          <div className="rounded-xl border border-[#DCE5EF] bg-white p-8 text-center text-sm text-gray-500">
+            Loading pending approvals...
+          </div>
+        ) : transactions.length > 0 ? (
           <div className="space-y-4">
             {transactions.map((tx) => (
               <div

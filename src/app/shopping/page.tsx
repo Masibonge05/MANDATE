@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { ProductItem, Mandate } from '@/lib/types';
+import { formatCurrency } from '@/lib/formatters';
 import { ProductCard } from '@/components/shopping/ProductCard';
 import { CartProposalModal } from '@/components/shopping/CartProposalModal';
 import {
@@ -44,7 +45,7 @@ const INITIAL_STEPS: AgentStep[] = [
 export default function ShoppingWorkspacePage() {
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [mandates, setMandates] = useState<Mandate[]>([]);
-  const [searchQuery, setSearchQuery] = useState('photography gift for sister');
+  const [searchQuery, setSearchQuery] = useState('office supplies and printer ink for a small business');
   const [loading, setLoading] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
   const [agentSteps, setAgentSteps] = useState<AgentStep[]>(INITIAL_STEPS);
@@ -82,7 +83,7 @@ export default function ShoppingWorkspacePage() {
     await new Promise(r => { const t = setTimeout(r, 600); stepTimeoutRefs.current.push(t); });
     updateStep('understand', {
       status: 'done',
-      detail: `Intent: Photography gift. Budget constraint: mandate-enforced. Categories: Photography Accessories, Bags & Straps, Electronics.`,
+      detail: `Intent: ${query.trim()}. Budget and category constraints are enforced by the active mandate.`,
       timestamp: new Date().toLocaleTimeString(),
     });
 
@@ -142,12 +143,15 @@ export default function ShoppingWorkspacePage() {
     await new Promise(r => { const t = setTimeout(r, 600); stepTimeoutRefs.current.push(t); });
     const scored = fetchedProducts
       .filter(p => !p.flaggedRisk)
-      .map(p => ({ title: p.title, score: (p.rating || 3) + (p.price < 60 ? 1 : 0) + (p.inStock ? 0.5 : 0) }))
+      .map(product => ({
+        product,
+        score: (product.rating || 3) + (product.price < 60 ? 1 : 0) + (product.inStock ? 0.5 : 0),
+      }))
       .sort((a, b) => b.score - a.score);
     updateStep('compare', {
       status: 'done',
       detail: scored.length > 0
-        ? `Scored ${scored.length} candidates. Top: "${scored[0]?.title}" (score: ${scored[0]?.score.toFixed(1)}).`
+        ? `Scored ${scored.length} candidates. Top: "${scored[0]?.product.title}" (score: ${scored[0]?.score.toFixed(1)}).`
         : 'No safe candidates found after filtering adversarial listings.',
       timestamp: new Date().toLocaleTimeString(),
     });
@@ -155,11 +159,11 @@ export default function ShoppingWorkspacePage() {
     // Step 6: Recommend
     updateStep('recommend', { status: 'running' });
     await new Promise(r => { const t = setTimeout(r, 400); stepTimeoutRefs.current.push(t); });
-    const topPick = fetchedProducts.find(p => !p.flaggedRisk);
+    const topPick = scored[0]?.product;
     updateStep('recommend', {
       status: 'done',
       detail: topPick
-        ? `Recommended: "${topPick.title}" from ${topPick.merchant} at ${topPick.currency} ${topPick.price}. Matches photography gift intent and budget parameters.`
+        ? `Recommended: "${topPick.title}" from ${topPick.merchant} at ${topPick.currency} ${topPick.price}. Selected using price, rating, and availability; MANDATE checks policy next.`
         : 'No safe recommendation. All candidates flagged as high-risk or over-budget.',
       timestamp: new Date().toLocaleTimeString(),
     });
@@ -186,6 +190,8 @@ export default function ShoppingWorkspacePage() {
     e.preventDefault();
     fetchCatalog(searchQuery);
   };
+
+  const activeMandate = mandates.find(mandate => mandate.status === 'active');
 
   const stepIcon = (step: AgentStep) => {
     if (step.status === 'done') return <CheckCircle2 className="w-4 h-4 text-[#0E8A44] flex-shrink-0" />;
@@ -225,7 +231,11 @@ export default function ShoppingWorkspacePage() {
             <div className="bg-[#F8FAFD] border border-[#DCE5EF] px-3.5 py-2 rounded-xl flex items-center gap-2 text-xs">
               <FileCheck2 className="w-3.5 h-3.5 text-[#003087]" />
               <span className="text-[#5E738B]">Active Mandate:</span>
-              <span className="font-bold text-[#003087]">Birthday Gift ($100 Cap)</span>
+              <span className="font-bold text-[#003087]">
+                {activeMandate
+                  ? `${activeMandate.name} (${formatCurrency(activeMandate.totalBudget, activeMandate.currency)} cap)`
+                  : 'No active mandate'}
+              </span>
             </div>
           </div>
         </div>
@@ -243,7 +253,7 @@ export default function ShoppingWorkspacePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 rows={3}
-                placeholder="e.g. Find a birthday gift for my sister. She likes photography. Budget is $100."
+                placeholder="e.g. Restock office supplies and printer ink for my small business. Budget is $100."
                 className="w-full px-3 py-2.5 bg-[#F5F8FC] border border-[#DCE5EF] rounded-xl text-xs font-medium text-[#142B4A] focus:outline-none focus:ring-1 focus:ring-[#0070E0] focus:bg-white resize-none"
               />
               <button

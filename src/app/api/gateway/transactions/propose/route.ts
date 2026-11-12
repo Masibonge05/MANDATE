@@ -180,12 +180,21 @@ export async function POST(req: Request) {
       },
     });
 
+    // HTTP status reflects the security decision:
+    //   200 = APPROVED / REQUIRES_APPROVAL (transaction created, needs further action)
+    //   422 = BLOCKED (policy boundary enforced, no PayPal order created)
+    const responseStatus = decisionOutcome.status === 'BLOCKED' ? 422 : 200;
+
     return NextResponse.json({
-      success: true,
+      success: decisionOutcome.status !== 'BLOCKED',
       decision: transaction.status,
+      approved: decisionOutcome.status === 'APPROVED',
+      blocked: decisionOutcome.status === 'BLOCKED',
+      requires_approval: decisionOutcome.status === 'REQUIRES_APPROVAL',
+      error: decisionOutcome.status === 'BLOCKED' ? decisionOutcome.primaryReason : undefined,
       transaction,
       outcome: decisionOutcome,
-    }, { status: 200 });
+    }, { status: responseStatus });
 
   } catch (error: any) {
     console.error('[Gateway Exception]:', error);
